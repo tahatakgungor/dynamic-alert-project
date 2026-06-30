@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from dynamic_alert.models import Device, ProtocolFingerprint, TelemetryRecord
+from dynamic_alert.models import Device, ProtocolFingerprint, Site, TelemetryRecord
 from dynamic_alert.services.discovery import NetworkDiscoveryService
 from dynamic_alert.services.protocols.registry import ProtocolRegistry
 from dynamic_alert.services.rule_engine import RuleEngine
@@ -25,9 +25,11 @@ class IngestionCoordinator:
         device_count = 0
 
         for item in discovered:
+            site = self.db.query(Site).filter(Site.code == item.site_code).one_or_none()
             device = self.db.query(Device).filter(Device.ip_address == item.ip_address).one_or_none()
             if device is None:
                 device = Device(
+                    site_id=site.id if site else None,
                     ip_address=item.ip_address,
                     hostname=item.hostname,
                     vendor=item.vendor,

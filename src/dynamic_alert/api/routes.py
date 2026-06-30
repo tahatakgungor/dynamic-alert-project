@@ -4,8 +4,16 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from dynamic_alert.database import get_db
-from dynamic_alert.models import AlertRule, Device, TelemetryRecord
-from dynamic_alert.schemas import AlertRuleCreate, AlertRuleRead, DeviceRead, TelemetryRead
+from dynamic_alert.models import AlertRule, Device, IntegrationEndpoint, Site, TelemetryRecord, Workspace
+from dynamic_alert.schemas import (
+    AlertRuleCreate,
+    AlertRuleRead,
+    DeviceRead,
+    IntegrationEndpointRead,
+    SiteRead,
+    TelemetryRead,
+    WorkspaceRead,
+)
 from dynamic_alert.services.container import get_ingestion_coordinator
 
 router = APIRouter()
@@ -17,6 +25,8 @@ def dashboard(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
     devices = db.query(Device).order_by(Device.created_at.desc()).limit(10).all()
     telemetry = db.query(TelemetryRecord).order_by(TelemetryRecord.observed_at.desc()).limit(20).all()
     rules = db.query(AlertRule).order_by(AlertRule.id.desc()).limit(20).all()
+    sites = db.query(Site).order_by(Site.id.desc()).limit(10).all()
+    integrations = db.query(IntegrationEndpoint).order_by(IntegrationEndpoint.id.desc()).limit(10).all()
     return templates.TemplateResponse(
         request,
         "index.html",
@@ -24,6 +34,8 @@ def dashboard(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
             "devices": devices,
             "telemetry": telemetry,
             "rules": rules,
+            "sites": sites,
+            "integrations": integrations,
         },
     )
 
@@ -47,6 +59,21 @@ def list_telemetry(db: Session = Depends(get_db)) -> list[TelemetryRecord]:
 @router.get("/api/rules", response_model=list[AlertRuleRead])
 def list_rules(db: Session = Depends(get_db)) -> list[AlertRule]:
     return db.query(AlertRule).order_by(AlertRule.id.desc()).all()
+
+
+@router.get("/api/workspaces", response_model=list[WorkspaceRead])
+def list_workspaces(db: Session = Depends(get_db)) -> list[Workspace]:
+    return db.query(Workspace).order_by(Workspace.id.desc()).all()
+
+
+@router.get("/api/sites", response_model=list[SiteRead])
+def list_sites(db: Session = Depends(get_db)) -> list[Site]:
+    return db.query(Site).order_by(Site.id.desc()).all()
+
+
+@router.get("/api/integrations", response_model=list[IntegrationEndpointRead])
+def list_integrations(db: Session = Depends(get_db)) -> list[IntegrationEndpoint]:
+    return db.query(IntegrationEndpoint).order_by(IntegrationEndpoint.id.desc()).all()
 
 
 @router.post("/api/rules", response_model=AlertRuleRead)

@@ -6,16 +6,72 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from dynamic_alert.database import Base
 
 
+class Workspace(Base):
+    __tablename__ = "workspaces"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    slug: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    sites: Mapped[list["Site"]] = relationship(back_populates="workspace")
+
+
+class Site(Base):
+    __tablename__ = "sites"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    workspace_id: Mapped[int] = mapped_column(ForeignKey("workspaces.id"))
+    name: Mapped[str] = mapped_column(String(128), index=True)
+    code: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    timezone: Mapped[str] = mapped_column(String(64), default="UTC")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    workspace: Mapped["Workspace"] = relationship(back_populates="sites")
+    network_segments: Mapped[list["NetworkSegment"]] = relationship(back_populates="site")
+    devices: Mapped[list["Device"]] = relationship(back_populates="site")
+    integrations: Mapped[list["IntegrationEndpoint"]] = relationship(back_populates="site")
+
+
+class NetworkSegment(Base):
+    __tablename__ = "network_segments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    site_id: Mapped[int] = mapped_column(ForeignKey("sites.id"))
+    cidr: Mapped[str] = mapped_column(String(64), index=True)
+    label: Mapped[str] = mapped_column(String(128))
+    scan_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    site: Mapped["Site"] = relationship(back_populates="network_segments")
+
+
+class IntegrationEndpoint(Base):
+    __tablename__ = "integration_endpoints"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    site_id: Mapped[int] = mapped_column(ForeignKey("sites.id"))
+    name: Mapped[str] = mapped_column(String(128), index=True)
+    kind: Mapped[str] = mapped_column(String(64), index=True)
+    status: Mapped[str] = mapped_column(String(32), default="planned")
+    target_ref: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    site: Mapped["Site"] = relationship(back_populates="integrations")
+
+
 class Device(Base):
     __tablename__ = "devices"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    site_id: Mapped[int | None] = mapped_column(ForeignKey("sites.id"), nullable=True)
     ip_address: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     hostname: Mapped[str | None] = mapped_column(String(128), nullable=True)
     vendor: Mapped[str | None] = mapped_column(String(128), nullable=True)
     status: Mapped[str] = mapped_column(String(32), default="discovered")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
+    site: Mapped["Site | None"] = relationship(back_populates="devices")
     protocol_fingerprints: Mapped[list["ProtocolFingerprint"]] = relationship(back_populates="device")
     telemetry: Mapped[list["TelemetryRecord"]] = relationship(back_populates="device")
 

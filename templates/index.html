@@ -110,6 +110,20 @@
 
     <section class="grid">
       <article class="card">
+        <h2>Sahalar</h2>
+        <ul>
+          {% for site in sites %}
+          <li>
+            <strong>{{ site.name }}</strong><br>
+            <small>{{ site.code }} | {{ site.timezone }}</small>
+          </li>
+          {% else %}
+          <li>Henuz saha yok.</li>
+          {% endfor %}
+        </ul>
+      </article>
+
+      <article class="card">
         <h2>Cihazlar</h2>
         <ul>
           {% for device in devices %}
@@ -148,6 +162,20 @@
           </li>
           {% else %}
           <li>Henuz kural yok.</li>
+          {% endfor %}
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>Entegrasyonlar</h2>
+        <ul>
+          {% for integration in integrations %}
+          <li>
+            <strong>{{ integration.name }}</strong><br>
+            <small>{{ integration.kind }} | {{ integration.status }}</small>
+          </li>
+          {% else %}
+          <li>Henuz entegrasyon yok.</li>
           {% endfor %}
         </ul>
       </article>

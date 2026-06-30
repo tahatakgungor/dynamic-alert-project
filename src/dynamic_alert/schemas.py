@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 class DeviceRead(BaseModel):
     id: int
+    site_id: int | None
     ip_address: str
     hostname: str | None
     vendor: str | None
@@ -40,6 +41,38 @@ class AlertRuleCreate(BaseModel):
 
 class AlertRuleRead(AlertRuleCreate):
     id: int
+
+    class Config:
+        from_attributes = True
+
+
+class WorkspaceRead(BaseModel):
+    id: int
+    name: str
+    slug: str
+
+    class Config:
+        from_attributes = True
+
+
+class SiteRead(BaseModel):
+    id: int
+    workspace_id: int
+    name: str
+    code: str
+    timezone: str
+
+    class Config:
+        from_attributes = True
+
+
+class IntegrationEndpointRead(BaseModel):
+    id: int
+    site_id: int
+    name: str
+    kind: str
+    status: str
+    target_ref: str | None
 
     class Config:
         from_attributes = True
