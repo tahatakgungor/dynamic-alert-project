@@ -108,6 +108,10 @@
       min-width: 280px;
       font: inherit;
     }
+    .form-grid {
+      display: grid;
+      gap: 10px;
+    }
   </style>
 </head>
 <body>
@@ -225,6 +229,13 @@
           <li>Henuz semantic map yok.</li>
           {% endfor %}
         </ul>
+        <div class="form-grid" style="margin-top:16px">
+          <input id="semanticProtocol" type="text" placeholder="protocol_name ornek: mqtt">
+          <input id="semanticSourceKey" type="text" placeholder="source_key ornek: mqtt_factory_line1_temp">
+          <input id="semanticMetricKey" type="text" placeholder="metric_key ornek: line_temperature_c">
+          <input id="semanticUnit" type="text" placeholder="unit ornek: C">
+          <button id="semanticMapButton">Semantic Map Kaydet</button>
+        </div>
       </article>
 
       <article class="card">
@@ -262,8 +273,13 @@
     const button = document.getElementById("scanButton");
     const observeButton = document.getElementById("observeButton");
     const liveCaptureButton = document.getElementById("liveCaptureButton");
+    const semanticMapButton = document.getElementById("semanticMapButton");
     const output = document.getElementById("scanResult");
     const apiKeyInput = document.getElementById("apiKeyInput");
+    const semanticProtocol = document.getElementById("semanticProtocol");
+    const semanticSourceKey = document.getElementById("semanticSourceKey");
+    const semanticMetricKey = document.getElementById("semanticMetricKey");
+    const semanticUnit = document.getElementById("semanticUnit");
 
     button.addEventListener("click", async () => {
       const apiKey = apiKeyInput.value.trim();
@@ -326,6 +342,39 @@
       }
       const payload = await response.json();
       output.textContent = `Live capture tamamlandi. Observation: ${payload.observations}, new clusters: ${payload.new_clusters}. Sayfayi yenileyin.`;
+    });
+
+    semanticMapButton.addEventListener("click", async () => {
+      const apiKey = apiKeyInput.value.trim();
+      if (!apiKey) {
+        output.textContent = "Semantic map kaydi icin API anahtari gerekli.";
+        return;
+      }
+      if (!semanticProtocol.value.trim() || !semanticSourceKey.value.trim() || !semanticMetricKey.value.trim()) {
+        output.textContent = "protocol_name, source_key ve metric_key gerekli.";
+        return;
+      }
+      output.textContent = "Semantic map kaydediliyor...";
+      const response = await fetch("/api/semantic-maps", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": apiKey,
+        },
+        body: JSON.stringify({
+          scope: "device",
+          protocol_name: semanticProtocol.value.trim(),
+          source_key: semanticSourceKey.value.trim(),
+          metric_key: semanticMetricKey.value.trim(),
+          unit: semanticUnit.value.trim() || null,
+        }),
+      });
+      if (!response.ok) {
+        output.textContent = "Semantic map kaydi basarisiz.";
+        return;
+      }
+      const payload = await response.json();
+      output.textContent = `Semantic map kaydedildi: ${payload.source_key} -> ${payload.metric_key}. Sayfayi yenileyin.`;
     });
   </script>
 </body>
