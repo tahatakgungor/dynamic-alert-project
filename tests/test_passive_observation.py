@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker
 
 from dynamic_alert.config import Settings
 from dynamic_alert.database import Base
-from dynamic_alert.models import Device, FlowCluster, TrafficObservation
+from dynamic_alert.models import Device, FlowCluster, TrafficObservation, UnknownProtocolCandidate
 from dynamic_alert.services.passive_observation import PacketSample, PassiveObservationService
 
 
@@ -34,3 +34,4 @@ def test_passive_observation_creates_observations_and_clusters() -> None:
         assert db.query(TrafficObservation).count() == 1
         cluster = db.query(FlowCluster).one()
         assert cluster.protocol_hint == "modbus_tcp"
+        assert db.query(UnknownProtocolCandidate).count() == 1

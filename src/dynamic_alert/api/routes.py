@@ -16,6 +16,7 @@ from dynamic_alert.models import (
     Site,
     TelemetryRecord,
     TrafficObservation,
+    UnknownProtocolCandidate,
     Workspace,
 )
 from dynamic_alert.schemas import (
@@ -44,6 +45,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
     integrations = db.query(IntegrationEndpoint).order_by(IntegrationEndpoint.id.desc()).limit(10).all()
     semantic_hypotheses = db.query(SemanticHypothesis).order_by(SemanticHypothesis.id.desc()).limit(10).all()
     flow_clusters = db.query(FlowCluster).order_by(FlowCluster.updated_at.desc()).limit(10).all()
+    unknown_candidates = db.query(UnknownProtocolCandidate).order_by(UnknownProtocolCandidate.updated_at.desc()).limit(10).all()
     return templates.TemplateResponse(
         request,
         "index.html",
@@ -55,6 +57,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
             "integrations": integrations,
             "semantic_hypotheses": semantic_hypotheses,
             "flow_clusters": flow_clusters,
+            "unknown_candidates": unknown_candidates,
         },
     )
 
@@ -159,6 +162,26 @@ def list_traffic_observations(
             "transport": item.transport,
             "protocol_hint": item.protocol_hint,
             "payload_sample": item.payload_sample,
+        }
+        for item in items
+    ]
+
+
+@router.get("/api/unknown-protocol-candidates")
+def list_unknown_protocol_candidates(
+    _: AuthContext = Depends(get_auth_context),
+    db: Session = Depends(get_db),
+) -> list[dict[str, str | int | float | None]]:
+    items = db.query(UnknownProtocolCandidate).order_by(UnknownProtocolCandidate.updated_at.desc()).all()
+    return [
+        {
+            "id": item.id,
+            "flow_cluster_id": item.flow_cluster_id,
+            "candidate_label": item.candidate_label,
+            "confidence": item.confidence,
+            "evidence": item.evidence,
+            "payload_fingerprint": item.payload_fingerprint,
+            "status": item.status,
         }
         for item in items
     ]

@@ -194,8 +194,34 @@ def upgrade() -> None:
     op.create_index("ix_flow_clusters_destination_ip", "flow_clusters", ["destination_ip"])
     op.create_index("ix_flow_clusters_updated_at", "flow_clusters", ["updated_at"])
 
+    op.create_table(
+        "unknown_protocol_candidates",
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("flow_cluster_id", sa.Integer(), sa.ForeignKey("flow_clusters.id"), nullable=False),
+        sa.Column("candidate_label", sa.String(length=128), nullable=False),
+        sa.Column("confidence", sa.Float(), nullable=False),
+        sa.Column("evidence", sa.Text(), nullable=False),
+        sa.Column("payload_fingerprint", sa.String(length=255), nullable=True),
+        sa.Column("status", sa.String(length=32), nullable=False),
+        sa.Column("updated_at", sa.DateTime(), nullable=False),
+    )
+    op.create_index("ix_unknown_protocol_candidates_id", "unknown_protocol_candidates", ["id"])
+    op.create_index(
+        "ix_unknown_protocol_candidates_candidate_label",
+        "unknown_protocol_candidates",
+        ["candidate_label"],
+    )
+    op.create_index("ix_unknown_protocol_candidates_updated_at", "unknown_protocol_candidates", ["updated_at"])
+
 
 def downgrade() -> None:
+    for index, table in [
+        ("ix_unknown_protocol_candidates_updated_at", "unknown_protocol_candidates"),
+        ("ix_unknown_protocol_candidates_candidate_label", "unknown_protocol_candidates"),
+        ("ix_unknown_protocol_candidates_id", "unknown_protocol_candidates"),
+    ]:
+        op.drop_index(index, table_name=table)
+    op.drop_table("unknown_protocol_candidates")
     for index, table in [
         ("ix_flow_clusters_updated_at", "flow_clusters"),
         ("ix_flow_clusters_destination_ip", "flow_clusters"),

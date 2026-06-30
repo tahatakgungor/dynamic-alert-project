@@ -226,6 +226,21 @@
           {% endfor %}
         </ul>
       </article>
+
+      <article class="card">
+        <h2>Unknown Candidates</h2>
+        <ul>
+          {% for candidate in unknown_candidates %}
+          <li>
+            <strong>{{ candidate.candidate_label }}</strong><br>
+            <small>{{ candidate.confidence }} | {{ candidate.status }}</small><br>
+            <small>{{ candidate.evidence }}</small>
+          </li>
+          {% else %}
+          <li>Henuz unknown candidate yok.</li>
+          {% endfor %}
+        </ul>
+      </article>
     </section>
   </div>
 

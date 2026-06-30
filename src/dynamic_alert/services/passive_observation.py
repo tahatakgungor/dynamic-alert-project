@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from dynamic_alert.config import Settings
 from dynamic_alert.models import Device, FlowCluster, TrafficObservation
+from dynamic_alert.services.traffic_intelligence import TrafficIntelligenceService
 
 
 @dataclass(slots=True)
@@ -24,6 +25,7 @@ class PassiveObservationService:
     def __init__(self, db: Session, settings: Settings) -> None:
         self.db = db
         self.settings = settings
+        self.traffic_intelligence = TrafficIntelligenceService(db)
 
     def ingest_samples(self, samples: list[PacketSample]) -> dict[str, int]:
         observation_count = 0
@@ -68,6 +70,9 @@ class PassiveObservationService:
                 cluster.sample_count += 1
                 cluster.last_payload_sample = sample.payload_sample
                 cluster.updated_at = datetime.utcnow()
+
+            self.db.flush()
+            self.traffic_intelligence.refresh_candidates_for_cluster(cluster)
 
         self.db.commit()
         return {"observations": observation_count, "new_clusters": cluster_count}

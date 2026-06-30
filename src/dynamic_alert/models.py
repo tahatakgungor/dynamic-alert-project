@@ -162,6 +162,19 @@ class FlowCluster(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
 
+class UnknownProtocolCandidate(Base):
+    __tablename__ = "unknown_protocol_candidates"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    flow_cluster_id: Mapped[int] = mapped_column(ForeignKey("flow_clusters.id"))
+    candidate_label: Mapped[str] = mapped_column(String(128), index=True)
+    confidence: Mapped[float] = mapped_column(Float, default=0.0)
+    evidence: Mapped[str] = mapped_column(Text)
+    payload_fingerprint: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    status: Mapped[str] = mapped_column(String(32), default="candidate")
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
 class AlertRule(Base):
     __tablename__ = "alert_rules"
 

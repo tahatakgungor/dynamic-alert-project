@@ -95,6 +95,7 @@ Not:
 - MQTT probe `DYNAMIC_ALERT_MQTT_PROBE_TOPICS` ile, SNMP probe ise community ve timeout ayarlariyla yonetilir.
 - Passive observation, unknown traffic akisini cluster'a cevirip ileride protocol reverse engineering icin hafiza olusturur.
 - Live capture icin `scapy` kullanilir; cihazda capture izni ve dogru network interface gerekir.
+- Unknown traffic akislari candidate dataset olarak saklanir; bu katman operator onayi ve ileri AI icin temel olur.
 
 ## Sonraki buyuk adimlar
 

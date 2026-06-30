@@ -68,6 +68,7 @@ Gercekci uygulama su katmanlarla olur:
 - MQTT adapteri eklendi
 - passive observation ve flow cluster omurgasi baslatildi
 - scapy tabanli live capture girisi eklendi
+- unknown protocol candidate dataset katmani eklendi
 
 ### AI / semantic katman
 
@@ -149,4 +150,4 @@ Her yeni sohbette ve her yeni gorevde bu kurallara uy:
 - Public GitHub repo hazir
 - Son protokol genislemesi: SNMP + MQTT
 - Son gozlem genislemesi: passive observation + flow clusters
-- Mevcut odak: live capture sertlestirme ve unknown traffic dataset
+- Mevcut odak: candidate dataset zenginlestirme ve OPC UA / audit log
