@@ -41,6 +41,7 @@ Hedeflenen buyume yolu:
 - `OpenTelemetry`
 - `React/Next.js` tabanli operasyon konsolu
 - `PyModbus` tabanli read-only endustriyel veri toplama
+- `pysnmp` ve `paho-mqtt` tabanli cok protokollu kesif
 
 Detaylar icin:
 
@@ -55,7 +56,7 @@ Detaylar icin:
 Agdaki tum makinelerin ozel veya proprietary protokollerini tek basina "otomatik cozmek" pratikte garanti edilemez. Bu ilk mimari su sirayi hedefler:
 
 1. `Discovery`: cihaz, port, servis ve protokol siniflandirma
-2. `Fingerprinting`: Modbus/TCP, raw TCP, D-Bus, HTTP, MQTT benzeri taninabilir yuzeyleri ayiklama
+2. `Fingerprinting`: Modbus/TCP, SNMP, MQTT, raw TCP, D-Bus, HTTP benzeri taninabilir yuzeyleri ayiklama
 3. `Register/Profile Reads`: bilinen cihazlar icin dogrudan register okuma
 4. `Semantic Mapping`: bilinen register/payload tiplerini anlamli olcu birimlerine cevirme
 5. `Heuristic Learning`: bilinmeyen akislari kural ve istatistikle aday metriklere donusturme
@@ -91,6 +92,7 @@ Not:
 - Varsayilan bootstrap anahtari sadece gelistirme icindir, uretimde degistirilmelidir.
 - Modbus register profilleri [configs/modbus_profiles.json](/Users/tahatakgungor/dynamic_alert_project/configs/modbus_profiles.json) icinden yonetilir.
 - Profil eslesmezse sistem generic read-only probe ile ham register verisi toplamayi dener.
+- MQTT probe `DYNAMIC_ALERT_MQTT_PROBE_TOPICS` ile, SNMP probe ise community ve timeout ayarlariyla yonetilir.
 
 ## Sonraki buyuk adimlar
 
@@ -100,4 +102,5 @@ Not:
 4. Zaman serisi verisinin TimescaleDB / InfluxDB'ye alinmasi
 5. Cihaz tarafinda systemd servisleri ve self-update mekanizmasi
 6. Yerel model runtime ile semantic mapping yardimcisi
-7. OPC UA / MQTT / SNMP adapterleri
+7. OPC UA adapteri
+8. Passive packet capture ve protocol clustering

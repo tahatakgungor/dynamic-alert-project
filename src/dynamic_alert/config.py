@@ -22,6 +22,15 @@ class Settings(BaseSettings):
     modbus_timeout_seconds: float = 1.0
     modbus_generic_probe_enabled: bool = True
     modbus_generic_probe_count: int = 4
+    mqtt_probe_topics_raw: str = "#"
+    mqtt_probe_timeout_seconds: float = 2.0
+    mqtt_probe_max_messages: int = 3
+    snmp_community: str = "public"
+    snmp_timeout_seconds: float = 1.0
+    snmp_port: int = 161
+    snmp_oid_sysdescr: str = "1.3.6.1.2.1.1.1.0"
+    snmp_oid_sysname: str = "1.3.6.1.2.1.1.5.0"
+    snmp_oid_uptime: str = "1.3.6.1.2.1.1.3.0"
 
     @computed_field
     @property
@@ -32,6 +41,11 @@ class Settings(BaseSettings):
     @property
     def api_cors_origins(self) -> list[str]:
         return [item.strip() for item in self.api_cors_origins_raw.split(",") if item.strip()]
+
+    @computed_field
+    @property
+    def mqtt_probe_topics(self) -> list[str]:
+        return [item.strip() for item in self.mqtt_probe_topics_raw.split(",") if item.strip()]
 
 
 @lru_cache(maxsize=1)

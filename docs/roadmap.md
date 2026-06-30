@@ -19,9 +19,10 @@
 ### Faz 2
 
 - protocol mapping wizard
-- MQTT / OPC UA adapterleri
+- OPC UA adapteri
 - webhook ve e-mail notifier
 - background worker ayrimi
+- passive packet capture
 
 ### Faz 3
 
