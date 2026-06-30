@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     snmp_oid_sysdescr: str = "1.3.6.1.2.1.1.1.0"
     snmp_oid_sysname: str = "1.3.6.1.2.1.1.5.0"
     snmp_oid_uptime: str = "1.3.6.1.2.1.1.3.0"
+    packet_capture_interface: str | None = None
+    packet_capture_timeout_seconds: float = 5.0
+    packet_capture_max_packets: int = 100
+    packet_capture_bpf_filter: str = "tcp or udp"
 
     @computed_field
     @property

@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy.orm import Session
 
+from dynamic_alert.config import Settings
 from dynamic_alert.models import Device, FlowCluster, TrafficObservation
 
 
@@ -19,8 +21,9 @@ class PacketSample:
 
 
 class PassiveObservationService:
-    def __init__(self, db: Session) -> None:
+    def __init__(self, db: Session, settings: Settings) -> None:
         self.db = db
+        self.settings = settings
 
     def ingest_samples(self, samples: list[PacketSample]) -> dict[str, int]:
         observation_count = 0
@@ -68,6 +71,66 @@ class PassiveObservationService:
 
         self.db.commit()
         return {"observations": observation_count, "new_clusters": cluster_count}
+
+    def capture_live_samples(self) -> list[PacketSample]:
+        try:
+            from scapy.all import IP, Raw, TCP, UDP, sniff
+        except ImportError:
+            return []
+
+        packets = sniff(
+            iface=self.settings.packet_capture_interface or None,
+            timeout=self.settings.packet_capture_timeout_seconds,
+            count=self.settings.packet_capture_max_packets,
+            filter=self.settings.packet_capture_bpf_filter,
+            store=True,
+        )
+
+        samples: list[PacketSample] = []
+        for packet in packets:
+            if IP not in packet:
+                continue
+            sample = self._packet_to_sample(packet, ip_cls=IP, tcp_cls=TCP, udp_cls=UDP, raw_cls=Raw)
+            if sample is not None:
+                samples.append(sample)
+        return samples
+
+    @staticmethod
+    def _packet_to_sample(
+        packet: Any,
+        *,
+        ip_cls: Any,
+        tcp_cls: Any,
+        udp_cls: Any,
+        raw_cls: Any,
+    ) -> PacketSample | None:
+        if ip_cls not in packet:
+            return None
+
+        ip_layer = packet[ip_cls]
+        if tcp_cls in packet:
+            transport = "tcp"
+            source_port = int(packet[tcp_cls].sport)
+            destination_port = int(packet[tcp_cls].dport)
+        elif udp_cls in packet:
+            transport = "udp"
+            source_port = int(packet[udp_cls].sport)
+            destination_port = int(packet[udp_cls].dport)
+        else:
+            return None
+
+        payload_sample = None
+        if raw_cls in packet:
+            payload_sample = bytes(packet[raw_cls].load[:64]).hex()
+
+        return PacketSample(
+            source_ip=str(ip_layer.src),
+            source_port=source_port,
+            destination_ip=str(ip_layer.dst),
+            destination_port=destination_port,
+            transport=transport,
+            payload_sample=payload_sample,
+        )
 
     @staticmethod
     def _build_cluster_key(sample: PacketSample) -> str:

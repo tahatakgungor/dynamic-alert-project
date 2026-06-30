@@ -17,6 +17,7 @@ dependencies = [
   "paho-mqtt>=2.1.0",
   "pysnmp>=7.1.0",
   "pymodbus>=3.8.0",
+  "scapy>=2.6.0",
   "sqlalchemy>=2.0.0",
   "uvicorn[standard]>=0.30.0",
 ]

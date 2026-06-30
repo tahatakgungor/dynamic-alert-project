@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from dynamic_alert.config import Settings
 from dynamic_alert.database import Base
 from dynamic_alert.models import Device, FlowCluster, TrafficObservation
 from dynamic_alert.services.passive_observation import PacketSample, PassiveObservationService
@@ -15,7 +16,7 @@ def test_passive_observation_creates_observations_and_clusters() -> None:
         db.add(Device(ip_address="192.168.1.20", hostname="plc", vendor="Generic", status="online"))
         db.commit()
 
-        service = PassiveObservationService(db)
+        service = PassiveObservationService(db, Settings())
         result = service.ingest_samples(
             [
                 PacketSample(

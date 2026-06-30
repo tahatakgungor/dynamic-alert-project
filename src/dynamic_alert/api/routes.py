@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from dynamic_alert.auth import AuthContext, get_auth_context, require_admin, require_operator
+from dynamic_alert.config import get_settings
 from dynamic_alert.database import get_db
 from dynamic_alert.models import (
     AlertRule,
@@ -69,8 +70,18 @@ def run_passive_observe(
     _: AuthContext = Depends(require_operator),
     db: Session = Depends(get_db),
 ) -> dict[str, int]:
-    service = PassiveObservationService(db)
+    service = PassiveObservationService(db, get_settings())
     return service.ingest_samples(service.sample_demo_traffic())
+
+
+@router.post("/api/live-capture")
+def run_live_capture(
+    _: AuthContext = Depends(require_operator),
+    db: Session = Depends(get_db),
+) -> dict[str, int]:
+    service = PassiveObservationService(db, get_settings())
+    samples = service.capture_live_samples()
+    return service.ingest_samples(samples)
 
 
 @router.get("/api/devices", response_model=list[DeviceRead])
