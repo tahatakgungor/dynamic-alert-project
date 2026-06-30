@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from dynamic_alert.config import Settings
 from dynamic_alert.models import SemanticHypothesis, TelemetryRecord
+from dynamic_alert.services.semantic_map import SemanticMapService
 
 
 @dataclass(slots=True)
@@ -20,12 +21,23 @@ class SemanticIntelligenceService:
     def __init__(self, db: Session, settings: Settings) -> None:
         self.db = db
         self.settings = settings
+        self.semantic_map_service = SemanticMapService(db)
 
     def learn_from_telemetry(self, telemetry: TelemetryRecord) -> SemanticHypothesis | None:
         if not self.settings.local_ai_enabled:
             return None
 
-        prediction = self._predict_semantics(telemetry)
+        resolved_map = self.semantic_map_service.resolve_for_telemetry(telemetry)
+        if resolved_map is not None:
+            prediction = SemanticPrediction(
+                metric_key=resolved_map.metric_key,
+                unit=resolved_map.unit,
+                confidence=resolved_map.confidence,
+                evidence=f"resolved from semantic map scope={resolved_map.scope}",
+                learning_state="confirmed",
+            )
+        else:
+            prediction = self._predict_semantics(telemetry)
         hypothesis = (
             self.db.query(SemanticHypothesis)
             .filter(

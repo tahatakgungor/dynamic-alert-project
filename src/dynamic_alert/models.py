@@ -187,6 +187,24 @@ class AuditLog(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
 
+class SemanticMap(Base):
+    __tablename__ = "semantic_maps"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    scope: Mapped[str] = mapped_column(String(32), default="device")
+    device_id: Mapped[int | None] = mapped_column(ForeignKey("devices.id"), nullable=True)
+    vendor: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    protocol_name: Mapped[str] = mapped_column(String(64), index=True)
+    source_key: Mapped[str] = mapped_column(String(128), index=True)
+    metric_key: Mapped[str] = mapped_column(String(128), index=True)
+    unit: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    confidence: Mapped[float] = mapped_column(Float, default=1.0)
+    source_kind: Mapped[str] = mapped_column(String(32), default="operator-confirmed")
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
 class AlertRule(Base):
     __tablename__ = "alert_rules"
 

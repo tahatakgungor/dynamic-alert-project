@@ -71,6 +71,7 @@ Gercekci uygulama su katmanlarla olur:
 - scapy tabanli live capture girisi eklendi
 - unknown protocol candidate dataset katmani eklendi
 - audit log temeli eklendi
+- operator feedback ile semantic map persistence eklendi
 
 ### AI / semantic katman
 
@@ -105,7 +106,7 @@ En oncelikli teknik sira:
 1. live capture sertlestirme
 2. unknown protocol candidate enrichment
 3. webhook / email notifier
-4. operator feedback -> semantic map akisi
+4. semantic map UI + operator workflow
 5. audit log genisletme
 6. background worker ayrimi
 7. merkezi model/runtime entegrasyonu
@@ -154,4 +155,5 @@ Her yeni sohbette ve her yeni gorevde bu kurallara uy:
 - Son protokol genislemesi: SNMP + MQTT
 - Son protokol genislemesi: OPC UA
 - Son operasyon genislemesi: audit log
-- Mevcut odak: candidate enrichment ve operator feedback loop
+- Son ogrenme genislemesi: semantic map persistence
+- Mevcut odak: candidate enrichment ve semantic map workflow

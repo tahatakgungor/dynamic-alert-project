@@ -12,6 +12,7 @@ from dynamic_alert.models import (
     Device,
     FlowCluster,
     IntegrationEndpoint,
+    SemanticMap,
     SemanticHypothesis,
     Site,
     TelemetryRecord,
@@ -24,6 +25,8 @@ from dynamic_alert.schemas import (
     AlertRuleRead,
     DeviceRead,
     IntegrationEndpointRead,
+    SemanticMapCreate,
+    SemanticMapRead,
     SemanticHypothesisRead,
     SiteRead,
     TelemetryRead,
@@ -32,6 +35,7 @@ from dynamic_alert.schemas import (
 from dynamic_alert.services.container import get_ingestion_coordinator
 from dynamic_alert.services.audit import AuditLogService
 from dynamic_alert.services.passive_observation import PassiveObservationService
+from dynamic_alert.services.semantic_map import SemanticMapService
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -45,6 +49,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
     sites = db.query(Site).order_by(Site.id.desc()).limit(10).all()
     integrations = db.query(IntegrationEndpoint).order_by(IntegrationEndpoint.id.desc()).limit(10).all()
     semantic_hypotheses = db.query(SemanticHypothesis).order_by(SemanticHypothesis.id.desc()).limit(10).all()
+    semantic_maps = db.query(SemanticMap).order_by(SemanticMap.updated_at.desc()).limit(10).all()
     flow_clusters = db.query(FlowCluster).order_by(FlowCluster.updated_at.desc()).limit(10).all()
     unknown_candidates = db.query(UnknownProtocolCandidate).order_by(UnknownProtocolCandidate.updated_at.desc()).limit(10).all()
     return templates.TemplateResponse(
@@ -57,6 +62,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
             "sites": sites,
             "integrations": integrations,
             "semantic_hypotheses": semantic_hypotheses,
+            "semantic_maps": semantic_maps,
             "flow_clusters": flow_clusters,
             "unknown_candidates": unknown_candidates,
         },
@@ -130,6 +136,30 @@ def list_semantic_hypotheses(
     db: Session = Depends(get_db),
 ) -> list[SemanticHypothesis]:
     return db.query(SemanticHypothesis).order_by(SemanticHypothesis.updated_at.desc()).all()
+
+
+@router.get("/api/semantic-maps", response_model=list[SemanticMapRead])
+def list_semantic_maps(
+    _: AuthContext = Depends(get_auth_context),
+    db: Session = Depends(get_db),
+) -> list[SemanticMap]:
+    return db.query(SemanticMap).order_by(SemanticMap.updated_at.desc()).all()
+
+
+@router.post("/api/semantic-maps", response_model=SemanticMapRead)
+def create_semantic_map(
+    payload: SemanticMapCreate,
+    auth: AuthContext = Depends(require_operator),
+    db: Session = Depends(get_db),
+) -> SemanticMap:
+    mapped = SemanticMapService(db).upsert_operator_map(**payload.model_dump())
+    AuditLogService(db).record(
+        actor=auth.name,
+        action="semantic-map.upsert",
+        target=f"{mapped.protocol_name}:{mapped.source_key}",
+        details=mapped.metric_key,
+    )
+    return mapped
 
 
 @router.get("/api/flow-clusters")

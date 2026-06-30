@@ -97,6 +97,7 @@ Not:
 - Live capture icin `scapy` kullanilir; cihazda capture izni ve dogru network interface gerekir.
 - Unknown traffic akislari candidate dataset olarak saklanir; bu katman operator onayi ve ileri AI icin temel olur.
 - OPC UA icin generic numeric node okuma girisi vardir; cihaz yapisina gore ileride profile/browse stratejisi gelistirilecektir.
+- Operator semantic map tanimlayabilir; sistem sonraki telemetry akislarinda bu map'i heuristic'in onune koyar.
 
 ## Sonraki buyuk adimlar
 

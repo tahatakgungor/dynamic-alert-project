@@ -92,3 +92,23 @@ class SemanticHypothesisRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class SemanticMapCreate(BaseModel):
+    scope: str = "device"
+    device_id: int | None = None
+    vendor: str | None = None
+    protocol_name: str
+    source_key: str
+    metric_key: str
+    unit: str | None = None
+    notes: str | None = None
+
+
+class SemanticMapRead(SemanticMapCreate):
+    id: int
+    confidence: float
+    source_kind: str
+
+    class Config:
+        from_attributes = True

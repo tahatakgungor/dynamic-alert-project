@@ -214,6 +214,20 @@
       </article>
 
       <article class="card">
+        <h2>Semantic Maps</h2>
+        <ul>
+          {% for mapping in semantic_maps %}
+          <li>
+            <strong>{{ mapping.source_key }}</strong> -> {{ mapping.metric_key }}<br>
+            <small>{{ mapping.protocol_name }} | {{ mapping.scope }}</small>
+          </li>
+          {% else %}
+          <li>Henuz semantic map yok.</li>
+          {% endfor %}
+        </ul>
+      </article>
+
+      <article class="card">
         <h2>Flow Clusters</h2>
         <ul>
           {% for cluster in flow_clusters %}

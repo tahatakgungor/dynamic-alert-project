@@ -213,8 +213,66 @@ def upgrade() -> None:
     )
     op.create_index("ix_unknown_protocol_candidates_updated_at", "unknown_protocol_candidates", ["updated_at"])
 
+    op.create_table(
+        "audit_logs",
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("actor", sa.String(length=128), nullable=False),
+        sa.Column("action", sa.String(length=128), nullable=False),
+        sa.Column("target", sa.String(length=255), nullable=False),
+        sa.Column("status", sa.String(length=32), nullable=False),
+        sa.Column("details", sa.Text(), nullable=True),
+        sa.Column("created_at", sa.DateTime(), nullable=False),
+    )
+    op.create_index("ix_audit_logs_id", "audit_logs", ["id"])
+    op.create_index("ix_audit_logs_actor", "audit_logs", ["actor"])
+    op.create_index("ix_audit_logs_action", "audit_logs", ["action"])
+    op.create_index("ix_audit_logs_created_at", "audit_logs", ["created_at"])
+
+    op.create_table(
+        "semantic_maps",
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("scope", sa.String(length=32), nullable=False),
+        sa.Column("device_id", sa.Integer(), sa.ForeignKey("devices.id"), nullable=True),
+        sa.Column("vendor", sa.String(length=128), nullable=True),
+        sa.Column("protocol_name", sa.String(length=64), nullable=False),
+        sa.Column("source_key", sa.String(length=128), nullable=False),
+        sa.Column("metric_key", sa.String(length=128), nullable=False),
+        sa.Column("unit", sa.String(length=32), nullable=True),
+        sa.Column("confidence", sa.Float(), nullable=False),
+        sa.Column("source_kind", sa.String(length=32), nullable=False),
+        sa.Column("notes", sa.Text(), nullable=True),
+        sa.Column("created_at", sa.DateTime(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(), nullable=False),
+    )
+    op.create_index("ix_semantic_maps_id", "semantic_maps", ["id"])
+    op.create_index("ix_semantic_maps_vendor", "semantic_maps", ["vendor"])
+    op.create_index("ix_semantic_maps_protocol_name", "semantic_maps", ["protocol_name"])
+    op.create_index("ix_semantic_maps_source_key", "semantic_maps", ["source_key"])
+    op.create_index("ix_semantic_maps_metric_key", "semantic_maps", ["metric_key"])
+    op.create_index("ix_semantic_maps_created_at", "semantic_maps", ["created_at"])
+    op.create_index("ix_semantic_maps_updated_at", "semantic_maps", ["updated_at"])
+
 
 def downgrade() -> None:
+    for index, table in [
+        ("ix_semantic_maps_updated_at", "semantic_maps"),
+        ("ix_semantic_maps_created_at", "semantic_maps"),
+        ("ix_semantic_maps_metric_key", "semantic_maps"),
+        ("ix_semantic_maps_source_key", "semantic_maps"),
+        ("ix_semantic_maps_protocol_name", "semantic_maps"),
+        ("ix_semantic_maps_vendor", "semantic_maps"),
+        ("ix_semantic_maps_id", "semantic_maps"),
+    ]:
+        op.drop_index(index, table_name=table)
+    op.drop_table("semantic_maps")
+    for index, table in [
+        ("ix_audit_logs_created_at", "audit_logs"),
+        ("ix_audit_logs_action", "audit_logs"),
+        ("ix_audit_logs_actor", "audit_logs"),
+        ("ix_audit_logs_id", "audit_logs"),
+    ]:
+        op.drop_index(index, table_name=table)
+    op.drop_table("audit_logs")
     for index, table in [
         ("ix_unknown_protocol_candidates_updated_at", "unknown_protocol_candidates"),
         ("ix_unknown_protocol_candidates_candidate_label", "unknown_protocol_candidates"),
