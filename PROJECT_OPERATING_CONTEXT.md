@@ -57,6 +57,7 @@ Gercekci uygulama su katmanlarla olur:
 - `viewer / operator / admin` RBAC temeli eklendi
 - `SECURITY.md` yazildi
 - `.env.example`, `.gitignore`, `CI`, `LICENSE`, `CONTRIBUTING` eklendi
+- Canli deploy `89.45.45.232:8011` uzerinde systemd ile yapildi
 
 ### Discovery ve protocol runtime
 
@@ -141,6 +142,7 @@ Her yeni sohbette ve her yeni gorevde bu kurallara uy:
 - tarama hizlari subnet ve bakim penceresine gore ayarlanmali
 - proprietary protokoller icin passive observation daha oncelikli olmali
 - bazi cihazlarda active probe bile riskli olabilir
+- canli sirlar repoya yazilmamali; sadece sunucuda tutulmali
 
 ## 10. Yeni sohbette nasil devam edilir?
 
@@ -156,4 +158,17 @@ Her yeni sohbette ve her yeni gorevde bu kurallara uy:
 - Son protokol genislemesi: OPC UA
 - Son operasyon genislemesi: audit log
 - Son ogrenme genislemesi: semantic map persistence
-- Mevcut odak: candidate enrichment ve semantic map workflow
+- Canli servis: `http://89.45.45.232:8011/`
+- Canli servis birimi: `dynamic-alert.service`
+- Canli klasor: `/opt/dynamic-alert`
+- Mevcut odak: candidate enrichment, semantic map workflow ve canli guvenlik sertlestirme
+
+## 12. Yeni sohbette kullanilacak kisa komutlar
+
+Kullanici hatirlatma komutu:
+
+- `DAC-LOAD`
+
+Agent okuma komutu:
+
+- `PROJECT_OPERATING_CONTEXT.md dosyasini oku, durumu ozetle ve kaldigin yerden devam et.`
