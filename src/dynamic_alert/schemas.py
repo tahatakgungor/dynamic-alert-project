@@ -76,3 +76,19 @@ class IntegrationEndpointRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class SemanticHypothesisRead(BaseModel):
+    id: int
+    device_id: int
+    raw_metric_key: str
+    predicted_metric_key: str
+    predicted_unit: str | None
+    confidence: float
+    evidence: str
+    learning_state: str
+    last_observed_value: float | None
+    observation_count: int
+
+    class Config:
+        from_attributes = True

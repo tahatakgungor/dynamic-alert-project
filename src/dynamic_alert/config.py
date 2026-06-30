@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     telegram_chat_id: str | None = None
     scan_subnets_raw: str = "192.168.1.0/24"
     api_cors_origins_raw: str = "http://127.0.0.1:8000,http://localhost:8000"
+    bootstrap_api_key: str = "change-me-before-production"
+    local_ai_enabled: bool = True
+    local_ai_model_name: str = "semantic-heuristic-v1"
+    local_ai_online_learning_enabled: bool = True
 
     @computed_field
     @property

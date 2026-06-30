@@ -60,6 +60,17 @@ class IntegrationEndpoint(Base):
     site: Mapped["Site"] = relationship(back_populates="integrations")
 
 
+class ApiClient(Base):
+    __tablename__ = "api_clients"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(128), index=True)
+    client_key: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    role: Mapped[str] = mapped_column(String(32), default="viewer")
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class Device(Base):
     __tablename__ = "devices"
 
@@ -102,6 +113,22 @@ class TelemetryRecord(Base):
     observed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
     device: Mapped["Device"] = relationship(back_populates="telemetry")
+
+
+class SemanticHypothesis(Base):
+    __tablename__ = "semantic_hypotheses"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    device_id: Mapped[int] = mapped_column(ForeignKey("devices.id"))
+    raw_metric_key: Mapped[str] = mapped_column(String(128), index=True)
+    predicted_metric_key: Mapped[str] = mapped_column(String(128))
+    predicted_unit: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    confidence: Mapped[float] = mapped_column(Float, default=0.0)
+    evidence: Mapped[str] = mapped_column(Text)
+    learning_state: Mapped[str] = mapped_column(String(32), default="candidate")
+    last_observed_value: Mapped[float | None] = mapped_column(Float, nullable=True)
+    observation_count: Mapped[int] = mapped_column(Integer, default=0)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
 class AlertRule(Base):

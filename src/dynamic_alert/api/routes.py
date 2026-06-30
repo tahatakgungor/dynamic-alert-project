@@ -3,13 +3,15 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
+from dynamic_alert.auth import AuthContext, get_auth_context, require_admin, require_operator
 from dynamic_alert.database import get_db
-from dynamic_alert.models import AlertRule, Device, IntegrationEndpoint, Site, TelemetryRecord, Workspace
+from dynamic_alert.models import AlertRule, ApiClient, Device, IntegrationEndpoint, SemanticHypothesis, Site, TelemetryRecord, Workspace
 from dynamic_alert.schemas import (
     AlertRuleCreate,
     AlertRuleRead,
     DeviceRead,
     IntegrationEndpointRead,
+    SemanticHypothesisRead,
     SiteRead,
     TelemetryRead,
     WorkspaceRead,
@@ -27,6 +29,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
     rules = db.query(AlertRule).order_by(AlertRule.id.desc()).limit(20).all()
     sites = db.query(Site).order_by(Site.id.desc()).limit(10).all()
     integrations = db.query(IntegrationEndpoint).order_by(IntegrationEndpoint.id.desc()).limit(10).all()
+    semantic_hypotheses = db.query(SemanticHypothesis).order_by(SemanticHypothesis.id.desc()).limit(10).all()
     return templates.TemplateResponse(
         request,
         "index.html",
@@ -36,12 +39,13 @@ def dashboard(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
             "rules": rules,
             "sites": sites,
             "integrations": integrations,
+            "semantic_hypotheses": semantic_hypotheses,
         },
     )
 
 
 @router.post("/api/scan")
-def run_scan(db: Session = Depends(get_db)) -> dict[str, int]:
+def run_scan(_: AuthContext = Depends(require_operator), db: Session = Depends(get_db)) -> dict[str, int]:
     coordinator = get_ingestion_coordinator(db)
     return coordinator.run_cycle()
 
@@ -76,8 +80,37 @@ def list_integrations(db: Session = Depends(get_db)) -> list[IntegrationEndpoint
     return db.query(IntegrationEndpoint).order_by(IntegrationEndpoint.id.desc()).all()
 
 
+@router.get("/api/semantic-hypotheses", response_model=list[SemanticHypothesisRead])
+def list_semantic_hypotheses(
+    _: AuthContext = Depends(get_auth_context),
+    db: Session = Depends(get_db),
+) -> list[SemanticHypothesis]:
+    return db.query(SemanticHypothesis).order_by(SemanticHypothesis.updated_at.desc()).all()
+
+
+@router.get("/api/auth/me")
+def who_am_i(auth: AuthContext = Depends(get_auth_context)) -> dict[str, str | int]:
+    return {"client_id": auth.client_id, "name": auth.name, "role": auth.role}
+
+
+@router.get("/api/admin/api-clients")
+def list_api_clients(
+    _: AuthContext = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> list[dict[str, str | int | bool]]:
+    clients = db.query(ApiClient).order_by(ApiClient.id.desc()).all()
+    return [
+        {"id": item.id, "name": item.name, "role": item.role, "enabled": item.enabled}
+        for item in clients
+    ]
+
+
 @router.post("/api/rules", response_model=AlertRuleRead)
-def create_rule(payload: AlertRuleCreate, db: Session = Depends(get_db)) -> AlertRule:
+def create_rule(
+    payload: AlertRuleCreate,
+    _: AuthContext = Depends(require_operator),
+    db: Session = Depends(get_db),
+) -> AlertRule:
     rule = AlertRule(**payload.model_dump())
     db.add(rule)
     db.commit()

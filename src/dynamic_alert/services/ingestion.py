@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from dynamic_alert.models import Device, ProtocolFingerprint, Site, TelemetryRecord
+from dynamic_alert.services.semantic_intelligence import SemanticIntelligenceService
 from dynamic_alert.services.discovery import NetworkDiscoveryService
 from dynamic_alert.services.protocols.registry import ProtocolRegistry
 from dynamic_alert.services.rule_engine import RuleEngine
@@ -13,11 +14,13 @@ class IngestionCoordinator:
         discovery: NetworkDiscoveryService,
         protocol_registry: ProtocolRegistry,
         rule_engine: RuleEngine,
+        semantic_intelligence: SemanticIntelligenceService,
     ) -> None:
         self.db = db
         self.discovery = discovery
         self.protocol_registry = protocol_registry
         self.rule_engine = rule_engine
+        self.semantic_intelligence = semantic_intelligence
 
     def run_cycle(self) -> dict[str, int]:
         discovered = self.discovery.scan()
@@ -66,6 +69,7 @@ class IngestionCoordinator:
                     self.db.add(telemetry)
                     self.db.commit()
                     self.db.refresh(telemetry)
+                    self.semantic_intelligence.learn_from_telemetry(telemetry)
                     self.rule_engine.evaluate(telemetry)
                     telemetry_count += 1
                 break

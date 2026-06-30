@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from dynamic_alert.config import Settings
-from dynamic_alert.models import AlertRule, IntegrationEndpoint, NetworkSegment, Site, Workspace
+from dynamic_alert.models import AlertRule, ApiClient, IntegrationEndpoint, NetworkSegment, Site, Workspace
 
 
 def bootstrap_defaults(db: Session, settings: Settings) -> None:
@@ -38,6 +38,16 @@ def bootstrap_defaults(db: Session, settings: Settings) -> None:
                 kind="telegram",
                 status="dry-run" if not settings.telegram_bot_token else "configured",
                 target_ref=settings.telegram_chat_id,
+            )
+        )
+        db.commit()
+
+    if db.query(ApiClient).filter(ApiClient.name == "bootstrap-admin").one_or_none() is None:
+        db.add(
+            ApiClient(
+                name="bootstrap-admin",
+                client_key=settings.bootstrap_api_key,
+                role="admin",
             )
         )
         db.commit()
