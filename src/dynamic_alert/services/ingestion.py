@@ -58,7 +58,7 @@ class IngestionCoordinator:
                 )
                 self.db.commit()
 
-                for sample in adapter.sample_telemetry():
+                for sample in adapter.collect_telemetry(item):
                     telemetry = TelemetryRecord(
                         device_id=device.id,
                         metric_key=sample["metric_key"],

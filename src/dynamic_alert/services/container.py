@@ -18,5 +18,5 @@ def get_ingestion_coordinator(db: Session) -> IngestionCoordinator:
     rule_engine = RuleEngine(db, notifier)
     semantic_intelligence = SemanticIntelligenceService(db, settings)
     discovery = NetworkDiscoveryService(settings.scan_subnets)
-    protocol_registry = ProtocolRegistry([ModbusAdapter(), DBusAdapter(), TcpAdapter()])
+    protocol_registry = ProtocolRegistry([ModbusAdapter(settings), DBusAdapter(), TcpAdapter()])
     return IngestionCoordinator(db, discovery, protocol_registry, rule_engine, semantic_intelligence)

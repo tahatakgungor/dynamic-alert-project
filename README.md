@@ -40,6 +40,7 @@ Hedeflenen buyume yolu:
 - `NATS veya Redpanda`
 - `OpenTelemetry`
 - `React/Next.js` tabanli operasyon konsolu
+- `PyModbus` tabanli read-only endustriyel veri toplama
 
 Detaylar icin:
 
@@ -55,10 +56,11 @@ Agdaki tum makinelerin ozel veya proprietary protokollerini tek basina "otomatik
 
 1. `Discovery`: cihaz, port, servis ve protokol siniflandirma
 2. `Fingerprinting`: Modbus/TCP, raw TCP, D-Bus, HTTP, MQTT benzeri taninabilir yuzeyleri ayiklama
-3. `Semantic Mapping`: bilinen register/payload tiplerini anlamli olcu birimlerine cevirme
-4. `Heuristic Learning`: bilinmeyen akislari kural ve istatistikle aday metriklere donusturme
-5. `Model-assisted Semantics`: hazir kucuk modellerle semantic yorum guclendirme
-6. `Human-in-the-loop`: belirsiz veri haritalarini operator onayi ile kalici hale getirme
+3. `Register/Profile Reads`: bilinen cihazlar icin dogrudan register okuma
+4. `Semantic Mapping`: bilinen register/payload tiplerini anlamli olcu birimlerine cevirme
+5. `Heuristic Learning`: bilinmeyen akislari kural ve istatistikle aday metriklere donusturme
+6. `Model-assisted Semantics`: hazir kucuk modellerle semantic yorum guclendirme
+7. `Human-in-the-loop`: belirsiz veri haritalarini operator onayi ile kalici hale getirme
 
 ## Hedef mimari
 
@@ -87,6 +89,8 @@ Not:
 
 - Yonetimsel endpointler `X-API-Key` ister.
 - Varsayilan bootstrap anahtari sadece gelistirme icindir, uretimde degistirilmelidir.
+- Modbus register profilleri [configs/modbus_profiles.json](/Users/tahatakgungor/dynamic_alert_project/configs/modbus_profiles.json) icinden yonetilir.
+- Profil eslesmezse sistem generic read-only probe ile ham register verisi toplamayi dener.
 
 ## Sonraki buyuk adimlar
 
@@ -96,3 +100,4 @@ Not:
 4. Zaman serisi verisinin TimescaleDB / InfluxDB'ye alinmasi
 5. Cihaz tarafinda systemd servisleri ve self-update mekanizmasi
 6. Yerel model runtime ile semantic mapping yardimcisi
+7. OPC UA / MQTT / SNMP adapterleri

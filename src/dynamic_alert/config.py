@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     local_ai_enabled: bool = True
     local_ai_model_name: str = "semantic-heuristic-v1"
     local_ai_online_learning_enabled: bool = True
+    modbus_profiles_path: str = "configs/modbus_profiles.json"
+    modbus_timeout_seconds: float = 1.0
+    modbus_generic_probe_enabled: bool = True
+    modbus_generic_probe_count: int = 4
 
     @computed_field
     @property

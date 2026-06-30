@@ -1,4 +1,8 @@
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from dynamic_alert.services.discovery import DiscoveredDevice
 
 
 @dataclass(slots=True)
@@ -17,5 +21,5 @@ class ProtocolAdapter:
     def fingerprint(self, ip_address: str, open_ports: set[int]) -> FingerprintResult:
         raise NotImplementedError
 
-    def sample_telemetry(self) -> list[dict]:
+    def collect_telemetry(self, device: "DiscoveredDevice") -> list[dict]:
         return []

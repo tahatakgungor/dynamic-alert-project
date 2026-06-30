@@ -1,0 +1,26 @@
+[
+  {
+    "name": "generic-plc-temperature",
+    "vendor": "Generic PLC",
+    "metric_key": "temperature_c",
+    "register_type": "holding",
+    "address": 0,
+    "count": 1,
+    "unit_id": 1,
+    "unit": "C",
+    "scale": 0.1,
+    "signed": false
+  },
+  {
+    "name": "generic-plc-pressure",
+    "vendor": "Generic PLC",
+    "metric_key": "pressure_bar",
+    "register_type": "holding",
+    "address": 1,
+    "count": 1,
+    "unit_id": 1,
+    "unit": "bar",
+    "scale": 0.1,
+    "signed": false
+  }
+]
