@@ -131,6 +131,37 @@ class SemanticHypothesis(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
+class TrafficObservation(Base):
+    __tablename__ = "traffic_observations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    device_id: Mapped[int | None] = mapped_column(ForeignKey("devices.id"), nullable=True)
+    source_ip: Mapped[str] = mapped_column(String(64), index=True)
+    source_port: Mapped[int] = mapped_column(Integer)
+    destination_ip: Mapped[str] = mapped_column(String(64), index=True)
+    destination_port: Mapped[int] = mapped_column(Integer)
+    transport: Mapped[str] = mapped_column(String(16))
+    protocol_hint: Mapped[str] = mapped_column(String(64), default="unknown")
+    payload_sample: Mapped[str | None] = mapped_column(Text, nullable=True)
+    direction: Mapped[str] = mapped_column(String(16), default="unknown")
+    observed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
+class FlowCluster(Base):
+    __tablename__ = "flow_clusters"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    cluster_key: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    protocol_hint: Mapped[str] = mapped_column(String(64), default="unknown")
+    source_ip: Mapped[str] = mapped_column(String(64), index=True)
+    destination_ip: Mapped[str] = mapped_column(String(64), index=True)
+    destination_port: Mapped[int] = mapped_column(Integer)
+    transport: Mapped[str] = mapped_column(String(16))
+    sample_count: Mapped[int] = mapped_column(Integer, default=0)
+    last_payload_sample: Mapped[str | None] = mapped_column(Text, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
 class AlertRule(Base):
     __tablename__ = "alert_rules"
 

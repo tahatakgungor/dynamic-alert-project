@@ -1,0 +1,151 @@
+# Project Operating Context
+
+Bu dosya projenin tek dosyalik operasyon hafizasidir.
+Yeni bir sohbette once bu dosya okunmali, sonra calismaya devam edilmelidir.
+
+## 1. Ana hedef
+
+Dynamic Alert Project:
+
+- edge cihazda calisacak
+- ağa baglanir baglanmaz cihazlari kesfedecek
+- bilinen protokollerle guvenli sekilde iletisime gececek
+- ham veriyi anlamli telemetry'ye cevirecek
+- semantic AI ile bilinmeyen alanlara hipotez uretecek
+- alarm ve entegrasyon sistemiyle olayi aksiyona cevirecek
+
+## 2. Kritik gerceklik
+
+Asagidaki ifade kesin hedef degil, yon verici hedeftir:
+
+- "ağdaki tum cihazlarla otomatik konus ve her veriyi eksiksiz anla"
+
+Gercekci uygulama su katmanlarla olur:
+
+1. discovery
+2. protocol fingerprinting
+3. safe read-only probing
+4. passive observation
+5. semantic inference
+6. operator confirmation
+
+## 3. Mimaride alinmis ana kararlar
+
+- Dil: Python 3.11+
+- API: FastAPI
+- Config: Pydantic Settings
+- ORM: SQLAlchemy 2.x
+- Migration: Alembic
+- DB baslangici: SQLite
+- Buyume yolu: PostgreSQL + TimescaleDB / ClickHouse
+- Bildirim: Telegram ile baslangic
+- AI stratejisi: deterministic + heuristic + local small model + operator feedback
+- Guvenlik: API key + RBAC + read-only protocol default
+
+## 4. Bugune kadar yapilanlar
+
+### Temel platform
+
+- FastAPI uygulama iskeleti kuruldu
+- dashboard ve temel API endpointleri eklendi
+- workspace / site / network segment / integration modeli eklendi
+- bootstrap verileri ve admin API key akisi eklendi
+
+### Guvenlik ve operasyon
+
+- API key tabanli auth eklendi
+- `viewer / operator / admin` RBAC temeli eklendi
+- `SECURITY.md` yazildi
+- `.env.example`, `.gitignore`, `CI`, `LICENSE`, `CONTRIBUTING` eklendi
+
+### Discovery ve protocol runtime
+
+- plugin-first protocol registry kuruldu
+- Modbus/TCP adapteri gercek `PyModbus` ile eklendi
+- profile-based register reads eklendi
+- generic modbus probe eklendi
+- SNMP adapteri eklendi
+- MQTT adapteri eklendi
+- passive observation ve flow cluster omurgasi baslatildi
+
+### AI / semantic katman
+
+- semantic hypothesis veri modeli eklendi
+- local semantic intelligence service eklendi
+- telemetry geldiginde semantic hypothesis uretme akisi eklendi
+- AI strateji dokumani yazildi
+
+### Dokumantasyon
+
+- architecture
+- deployment
+- platform blueprint
+- ui strategy
+- roadmap
+- ai strategy
+- discovery strategy
+
+## 5. Mevcut protokol destegi
+
+- Modbus/TCP
+- SNMP
+- MQTT
+- raw TCP fallback
+- D-Bus gateway heuristic
+
+## 6. Simdi siradaki en mantikli isler
+
+En oncelikli teknik sira:
+
+1. passive packet capture
+2. flow clustering
+3. unknown protocol observation store
+4. OPC UA adapteri
+5. webhook / email notifier
+6. audit log
+7. background worker ayrimi
+
+## 7. Token optimizasyon kurallari
+
+Her yeni sohbette ve her yeni gorevde bu kurallara uy:
+
+1. Once bu dosyayi oku, tum repo taramasini gereksiz yere tekrar etme.
+2. Kullanici istemedikce uzun teori tekrari yapma.
+3. Mevcut mimari kararlarini yeniden uretmek yerine bu dosyadaki kararlar uzerinden ilerle.
+4. Buyuk dosyalari butun olarak tekrar tekrar okumak yerine sadece ilgili bolumu ac.
+5. Kod degisikligi yapmadan once hedef dosyalari dar kapsamli incele.
+6. Yeni ozellikte once minimum calisan iskeleti kur, sonra genislet.
+7. Web aramasi sadece degisebilir veya resmi dogrulama gereken konularda yap.
+8. Final cevapta sadece sonuc, dogrulama ve siradaki en mantikli adimi ver.
+9. Tekrar eden repo ozetleri yazma; gerekiyorsa bu dosyaya referans ver.
+10. Bu dosyayi her anlamli iterasyonda guncelle.
+
+## 8. Calisma kurallari
+
+- Varsayilan protocol davranisi read-only olmali
+- Endustriyel agda agresif ama guvenli davranilmali
+- Bilinmeyen semantic alanlar AI + operator ile netlestirilmeli
+- Projede "hazir modeli kullan, gereksiz yere sifirdan model egitme" ilkesi korunmali
+- Edge cihazda kontrolsuz self-modifying model olmamali
+- Surekli ogrenme once hypothesis memory ile ilerlemeli
+
+## 9. Uretim riskleri
+
+- bootstrap API key uretimde degistirilmeli
+- tarama hizlari subnet ve bakim penceresine gore ayarlanmali
+- proprietary protokoller icin passive observation daha oncelikli olmali
+- bazi cihazlarda active probe bile riskli olabilir
+
+## 10. Yeni sohbette nasil devam edilir?
+
+1. Bu dosyayi oku
+2. `## 6. Simdi siradaki en mantikli isler` bolumune bak
+3. Gerekirse sadece ilgili kod dosyalarini ac
+4. Kaldigin yerden uygula
+
+## 11. Son guncel durum
+
+- Public GitHub repo hazir
+- Son protokol genislemesi: SNMP + MQTT
+- Son gozlem genislemesi: passive observation + flow clusters
+- Mevcut odak: gerçek packet capture motoru ve unknown traffic dataset

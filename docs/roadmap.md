@@ -23,6 +23,7 @@
 - webhook ve e-mail notifier
 - background worker ayrimi
 - passive packet capture
+- unknown traffic dataset biriktirme
 
 ### Faz 3
 

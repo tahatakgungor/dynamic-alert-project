@@ -156,8 +156,63 @@ def upgrade() -> None:
     op.create_index("ix_semantic_hypotheses_id", "semantic_hypotheses", ["id"])
     op.create_index("ix_semantic_hypotheses_raw_metric_key", "semantic_hypotheses", ["raw_metric_key"])
 
+    op.create_table(
+        "traffic_observations",
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("device_id", sa.Integer(), sa.ForeignKey("devices.id"), nullable=True),
+        sa.Column("source_ip", sa.String(length=64), nullable=False),
+        sa.Column("source_port", sa.Integer(), nullable=False),
+        sa.Column("destination_ip", sa.String(length=64), nullable=False),
+        sa.Column("destination_port", sa.Integer(), nullable=False),
+        sa.Column("transport", sa.String(length=16), nullable=False),
+        sa.Column("protocol_hint", sa.String(length=64), nullable=False),
+        sa.Column("payload_sample", sa.Text(), nullable=True),
+        sa.Column("direction", sa.String(length=16), nullable=False),
+        sa.Column("observed_at", sa.DateTime(), nullable=False),
+    )
+    op.create_index("ix_traffic_observations_id", "traffic_observations", ["id"])
+    op.create_index("ix_traffic_observations_source_ip", "traffic_observations", ["source_ip"])
+    op.create_index("ix_traffic_observations_destination_ip", "traffic_observations", ["destination_ip"])
+    op.create_index("ix_traffic_observations_observed_at", "traffic_observations", ["observed_at"])
+
+    op.create_table(
+        "flow_clusters",
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("cluster_key", sa.String(length=255), nullable=False),
+        sa.Column("protocol_hint", sa.String(length=64), nullable=False),
+        sa.Column("source_ip", sa.String(length=64), nullable=False),
+        sa.Column("destination_ip", sa.String(length=64), nullable=False),
+        sa.Column("destination_port", sa.Integer(), nullable=False),
+        sa.Column("transport", sa.String(length=16), nullable=False),
+        sa.Column("sample_count", sa.Integer(), nullable=False),
+        sa.Column("last_payload_sample", sa.Text(), nullable=True),
+        sa.Column("updated_at", sa.DateTime(), nullable=False),
+    )
+    op.create_index("ix_flow_clusters_id", "flow_clusters", ["id"])
+    op.create_index("ix_flow_clusters_cluster_key", "flow_clusters", ["cluster_key"], unique=True)
+    op.create_index("ix_flow_clusters_source_ip", "flow_clusters", ["source_ip"])
+    op.create_index("ix_flow_clusters_destination_ip", "flow_clusters", ["destination_ip"])
+    op.create_index("ix_flow_clusters_updated_at", "flow_clusters", ["updated_at"])
+
 
 def downgrade() -> None:
+    for index, table in [
+        ("ix_flow_clusters_updated_at", "flow_clusters"),
+        ("ix_flow_clusters_destination_ip", "flow_clusters"),
+        ("ix_flow_clusters_source_ip", "flow_clusters"),
+        ("ix_flow_clusters_cluster_key", "flow_clusters"),
+        ("ix_flow_clusters_id", "flow_clusters"),
+    ]:
+        op.drop_index(index, table_name=table)
+    op.drop_table("flow_clusters")
+    for index, table in [
+        ("ix_traffic_observations_observed_at", "traffic_observations"),
+        ("ix_traffic_observations_destination_ip", "traffic_observations"),
+        ("ix_traffic_observations_source_ip", "traffic_observations"),
+        ("ix_traffic_observations_id", "traffic_observations"),
+    ]:
+        op.drop_index(index, table_name=table)
+    op.drop_table("traffic_observations")
     for index, table in [
         ("ix_semantic_hypotheses_raw_metric_key", "semantic_hypotheses"),
         ("ix_semantic_hypotheses_id", "semantic_hypotheses"),

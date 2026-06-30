@@ -121,6 +121,7 @@
       <div class="toolbar">
         <input id="apiKeyInput" type="password" placeholder="X-API-Key girin">
         <button id="scanButton">Tarama ve Veri Toplama Baslat</button>
+        <button id="observeButton">Passive Observe Baslat</button>
       </div>
       <small id="scanResult">Hazir.</small>
     </section>
@@ -210,11 +211,26 @@
           {% endfor %}
         </ul>
       </article>
+
+      <article class="card">
+        <h2>Flow Clusters</h2>
+        <ul>
+          {% for cluster in flow_clusters %}
+          <li>
+            <strong>{{ cluster.protocol_hint }}</strong><br>
+            <small>{{ cluster.source_ip }} -> {{ cluster.destination_ip }}:{{ cluster.destination_port }} | {{ cluster.sample_count }} sample</small>
+          </li>
+          {% else %}
+          <li>Henuz flow cluster yok.</li>
+          {% endfor %}
+        </ul>
+      </article>
     </section>
   </div>
 
   <script>
     const button = document.getElementById("scanButton");
+    const observeButton = document.getElementById("observeButton");
     const output = document.getElementById("scanResult");
     const apiKeyInput = document.getElementById("apiKeyInput");
 
@@ -237,6 +253,27 @@
       }
       const payload = await response.json();
       output.textContent = `Tarama tamamlandi. Yeni cihaz: ${payload.new_devices}, telemetry: ${payload.telemetry_records}. Sayfayi yenileyin.`;
+    });
+
+    observeButton.addEventListener("click", async () => {
+      const apiKey = apiKeyInput.value.trim();
+      if (!apiKey) {
+        output.textContent = "Passive observe icin API anahtari gerekli.";
+        return;
+      }
+      output.textContent = "Passive observe calisiyor...";
+      const response = await fetch("/api/passive-observe", {
+        method: "POST",
+        headers: {
+          "X-API-Key": apiKey,
+        },
+      });
+      if (!response.ok) {
+        output.textContent = "Passive observe basarisiz.";
+        return;
+      }
+      const payload = await response.json();
+      output.textContent = `Passive observe tamamlandi. Observation: ${payload.observations}, new clusters: ${payload.new_clusters}. Sayfayi yenileyin.`;
     });
   </script>
 </body>

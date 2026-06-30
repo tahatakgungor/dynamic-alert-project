@@ -5,7 +5,18 @@ from sqlalchemy.orm import Session
 
 from dynamic_alert.auth import AuthContext, get_auth_context, require_admin, require_operator
 from dynamic_alert.database import get_db
-from dynamic_alert.models import AlertRule, ApiClient, Device, IntegrationEndpoint, SemanticHypothesis, Site, TelemetryRecord, Workspace
+from dynamic_alert.models import (
+    AlertRule,
+    ApiClient,
+    Device,
+    FlowCluster,
+    IntegrationEndpoint,
+    SemanticHypothesis,
+    Site,
+    TelemetryRecord,
+    TrafficObservation,
+    Workspace,
+)
 from dynamic_alert.schemas import (
     AlertRuleCreate,
     AlertRuleRead,
@@ -17,6 +28,7 @@ from dynamic_alert.schemas import (
     WorkspaceRead,
 )
 from dynamic_alert.services.container import get_ingestion_coordinator
+from dynamic_alert.services.passive_observation import PassiveObservationService
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -30,6 +42,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
     sites = db.query(Site).order_by(Site.id.desc()).limit(10).all()
     integrations = db.query(IntegrationEndpoint).order_by(IntegrationEndpoint.id.desc()).limit(10).all()
     semantic_hypotheses = db.query(SemanticHypothesis).order_by(SemanticHypothesis.id.desc()).limit(10).all()
+    flow_clusters = db.query(FlowCluster).order_by(FlowCluster.updated_at.desc()).limit(10).all()
     return templates.TemplateResponse(
         request,
         "index.html",
@@ -40,6 +53,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
             "sites": sites,
             "integrations": integrations,
             "semantic_hypotheses": semantic_hypotheses,
+            "flow_clusters": flow_clusters,
         },
     )
 
@@ -48,6 +62,15 @@ def dashboard(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
 def run_scan(_: AuthContext = Depends(require_operator), db: Session = Depends(get_db)) -> dict[str, int]:
     coordinator = get_ingestion_coordinator(db)
     return coordinator.run_cycle()
+
+
+@router.post("/api/passive-observe")
+def run_passive_observe(
+    _: AuthContext = Depends(require_operator),
+    db: Session = Depends(get_db),
+) -> dict[str, int]:
+    service = PassiveObservationService(db)
+    return service.ingest_samples(service.sample_demo_traffic())
 
 
 @router.get("/api/devices", response_model=list[DeviceRead])
@@ -86,6 +109,48 @@ def list_semantic_hypotheses(
     db: Session = Depends(get_db),
 ) -> list[SemanticHypothesis]:
     return db.query(SemanticHypothesis).order_by(SemanticHypothesis.updated_at.desc()).all()
+
+
+@router.get("/api/flow-clusters")
+def list_flow_clusters(
+    _: AuthContext = Depends(get_auth_context),
+    db: Session = Depends(get_db),
+) -> list[dict[str, str | int | None]]:
+    clusters = db.query(FlowCluster).order_by(FlowCluster.updated_at.desc()).all()
+    return [
+        {
+            "id": item.id,
+            "cluster_key": item.cluster_key,
+            "protocol_hint": item.protocol_hint,
+            "source_ip": item.source_ip,
+            "destination_ip": item.destination_ip,
+            "destination_port": item.destination_port,
+            "transport": item.transport,
+            "sample_count": item.sample_count,
+        }
+        for item in clusters
+    ]
+
+
+@router.get("/api/traffic-observations")
+def list_traffic_observations(
+    _: AuthContext = Depends(get_auth_context),
+    db: Session = Depends(get_db),
+) -> list[dict[str, str | int | None]]:
+    items = db.query(TrafficObservation).order_by(TrafficObservation.observed_at.desc()).limit(100).all()
+    return [
+        {
+            "id": item.id,
+            "source_ip": item.source_ip,
+            "source_port": item.source_port,
+            "destination_ip": item.destination_ip,
+            "destination_port": item.destination_port,
+            "transport": item.transport,
+            "protocol_hint": item.protocol_hint,
+            "payload_sample": item.payload_sample,
+        }
+        for item in items
+    ]
 
 
 @router.get("/api/auth/me")

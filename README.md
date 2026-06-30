@@ -93,6 +93,7 @@ Not:
 - Modbus register profilleri [configs/modbus_profiles.json](/Users/tahatakgungor/dynamic_alert_project/configs/modbus_profiles.json) icinden yonetilir.
 - Profil eslesmezse sistem generic read-only probe ile ham register verisi toplamayi dener.
 - MQTT probe `DYNAMIC_ALERT_MQTT_PROBE_TOPICS` ile, SNMP probe ise community ve timeout ayarlariyla yonetilir.
+- Passive observation, unknown traffic akisini cluster'a cevirip ileride protocol reverse engineering icin hafiza olusturur.
 
 ## Sonraki buyuk adimlar
 

@@ -32,6 +32,7 @@ Ag musaitse:
 - packet capture
 - flow clustering
 - request/response pattern extraction
+- unknown payload sample retention
 
 Bu, proprietary protokolleri anlamada aktif probing'den daha yararlidir.
 
