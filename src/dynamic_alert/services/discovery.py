@@ -30,6 +30,6 @@ class NetworkDiscoveryService:
                 ip_address="192.168.1.21",
                 hostname="edge-gateway-01",
                 vendor="Industrial IPC",
-                open_ports={22, 80, 1883, 161},
+                open_ports={22, 80, 1883, 161, 4840},
             ),
         ]

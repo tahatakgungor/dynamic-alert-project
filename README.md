@@ -96,6 +96,7 @@ Not:
 - Passive observation, unknown traffic akisini cluster'a cevirip ileride protocol reverse engineering icin hafiza olusturur.
 - Live capture icin `scapy` kullanilir; cihazda capture izni ve dogru network interface gerekir.
 - Unknown traffic akislari candidate dataset olarak saklanir; bu katman operator onayi ve ileri AI icin temel olur.
+- OPC UA icin generic numeric node okuma girisi vardir; cihaz yapisina gore ileride profile/browse stratejisi gelistirilecektir.
 
 ## Sonraki buyuk adimlar
 

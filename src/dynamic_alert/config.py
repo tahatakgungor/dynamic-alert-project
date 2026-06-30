@@ -35,6 +35,8 @@ class Settings(BaseSettings):
     packet_capture_timeout_seconds: float = 5.0
     packet_capture_max_packets: int = 100
     packet_capture_bpf_filter: str = "tcp or udp"
+    opcua_timeout_seconds: float = 2.0
+    opcua_max_nodes: int = 12
 
     @computed_field
     @property

@@ -30,6 +30,7 @@ from dynamic_alert.schemas import (
     WorkspaceRead,
 )
 from dynamic_alert.services.container import get_ingestion_coordinator
+from dynamic_alert.services.audit import AuditLogService
 from dynamic_alert.services.passive_observation import PassiveObservationService
 
 router = APIRouter()
@@ -65,26 +66,32 @@ def dashboard(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
 @router.post("/api/scan")
 def run_scan(_: AuthContext = Depends(require_operator), db: Session = Depends(get_db)) -> dict[str, int]:
     coordinator = get_ingestion_coordinator(db)
-    return coordinator.run_cycle()
+    result = coordinator.run_cycle()
+    AuditLogService(db).record(actor="operator", action="scan.run", target="network", details=str(result))
+    return result
 
 
 @router.post("/api/passive-observe")
 def run_passive_observe(
-    _: AuthContext = Depends(require_operator),
+    auth: AuthContext = Depends(require_operator),
     db: Session = Depends(get_db),
 ) -> dict[str, int]:
     service = PassiveObservationService(db, get_settings())
-    return service.ingest_samples(service.sample_demo_traffic())
+    result = service.ingest_samples(service.sample_demo_traffic())
+    AuditLogService(db).record(actor=auth.name, action="observe.demo", target="traffic", details=str(result))
+    return result
 
 
 @router.post("/api/live-capture")
 def run_live_capture(
-    _: AuthContext = Depends(require_operator),
+    auth: AuthContext = Depends(require_operator),
     db: Session = Depends(get_db),
 ) -> dict[str, int]:
     service = PassiveObservationService(db, get_settings())
     samples = service.capture_live_samples()
-    return service.ingest_samples(samples)
+    result = service.ingest_samples(samples)
+    AuditLogService(db).record(actor=auth.name, action="capture.live", target="traffic", details=str(result))
+    return result
 
 
 @router.get("/api/devices", response_model=list[DeviceRead])
@@ -207,11 +214,12 @@ def list_api_clients(
 @router.post("/api/rules", response_model=AlertRuleRead)
 def create_rule(
     payload: AlertRuleCreate,
-    _: AuthContext = Depends(require_operator),
+    auth: AuthContext = Depends(require_operator),
     db: Session = Depends(get_db),
 ) -> AlertRule:
     rule = AlertRule(**payload.model_dump())
     db.add(rule)
     db.commit()
     db.refresh(rule)
+    AuditLogService(db).record(actor=auth.name, action="rule.create", target=rule.name, details=rule.metric_key)
     return rule

@@ -6,6 +6,7 @@ from dynamic_alert.services.ingestion import IngestionCoordinator
 from dynamic_alert.services.protocols.mqtt import MqttAdapter
 from dynamic_alert.services.protocols.dbus import DBusAdapter
 from dynamic_alert.services.protocols.modbus import ModbusAdapter
+from dynamic_alert.services.protocols.opcua import OpcUaAdapter
 from dynamic_alert.services.protocols.registry import ProtocolRegistry
 from dynamic_alert.services.protocols.snmp import SnmpAdapter
 from dynamic_alert.services.protocols.tcp import TcpAdapter
@@ -21,6 +22,13 @@ def get_ingestion_coordinator(db: Session) -> IngestionCoordinator:
     semantic_intelligence = SemanticIntelligenceService(db, settings)
     discovery = NetworkDiscoveryService(settings.scan_subnets)
     protocol_registry = ProtocolRegistry(
-        [ModbusAdapter(settings), SnmpAdapter(settings), MqttAdapter(settings), DBusAdapter(), TcpAdapter()]
+        [
+            ModbusAdapter(settings),
+            SnmpAdapter(settings),
+            MqttAdapter(settings),
+            OpcUaAdapter(settings),
+            DBusAdapter(),
+            TcpAdapter(),
+        ]
     )
     return IngestionCoordinator(db, discovery, protocol_registry, rule_engine, semantic_intelligence)

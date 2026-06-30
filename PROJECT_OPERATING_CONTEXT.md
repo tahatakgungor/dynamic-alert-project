@@ -66,9 +66,11 @@ Gercekci uygulama su katmanlarla olur:
 - generic modbus probe eklendi
 - SNMP adapteri eklendi
 - MQTT adapteri eklendi
+- OPC UA adapteri eklendi
 - passive observation ve flow cluster omurgasi baslatildi
 - scapy tabanli live capture girisi eklendi
 - unknown protocol candidate dataset katmani eklendi
+- audit log temeli eklendi
 
 ### AI / semantic katman
 
@@ -92,6 +94,7 @@ Gercekci uygulama su katmanlarla olur:
 - Modbus/TCP
 - SNMP
 - MQTT
+- OPC UA
 - raw TCP fallback
 - D-Bus gateway heuristic
 
@@ -99,13 +102,13 @@ Gercekci uygulama su katmanlarla olur:
 
 En oncelikli teknik sira:
 
-1. passive packet capture
-2. flow clustering
-3. unknown protocol observation store
-4. OPC UA adapteri
-5. webhook / email notifier
-6. audit log
-7. background worker ayrimi
+1. live capture sertlestirme
+2. unknown protocol candidate enrichment
+3. webhook / email notifier
+4. operator feedback -> semantic map akisi
+5. audit log genisletme
+6. background worker ayrimi
+7. merkezi model/runtime entegrasyonu
 
 ## 7. Token optimizasyon kurallari
 
@@ -149,5 +152,6 @@ Her yeni sohbette ve her yeni gorevde bu kurallara uy:
 
 - Public GitHub repo hazir
 - Son protokol genislemesi: SNMP + MQTT
-- Son gozlem genislemesi: passive observation + flow clusters
-- Mevcut odak: candidate dataset zenginlestirme ve OPC UA / audit log
+- Son protokol genislemesi: OPC UA
+- Son operasyon genislemesi: audit log
+- Mevcut odak: candidate enrichment ve operator feedback loop

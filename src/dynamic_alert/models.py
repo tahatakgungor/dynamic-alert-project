@@ -175,6 +175,18 @@ class UnknownProtocolCandidate(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
 
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    actor: Mapped[str] = mapped_column(String(128), index=True)
+    action: Mapped[str] = mapped_column(String(128), index=True)
+    target: Mapped[str] = mapped_column(String(255))
+    status: Mapped[str] = mapped_column(String(32), default="ok")
+    details: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
 class AlertRule(Base):
     __tablename__ = "alert_rules"
 
