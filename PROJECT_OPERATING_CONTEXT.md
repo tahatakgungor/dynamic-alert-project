@@ -86,6 +86,7 @@ Gercekci uygulama su katmanlarla olur:
 - edge runtime API'lerini kullanan ilk `dynamic-alert-edge-agent` CLI eklendi
 - edge job payload'lari scan subneti, capture interface/filter ve demo cihaz parametrelerini gercekten etkiler hale getirildi
 - production ortaminda varsayilan bootstrap key reddi, edge payload limitleri ve status/job kind dogrulamalari eklendi
+- control plane <-> edge agent tam roundtrip smoke testi ve saha smoke matrix dokumani eklendi
 - operator feedback ile semantic map persistence eklendi
 
 ### AI / semantic katman
@@ -183,10 +184,11 @@ Her yeni sohbette ve her yeni gorevde bu kurallara uy:
 - Son agent genislemesi: register / run-once / run modlari olan edge agent poller CLI
 - Son executor genislemesi: edge job payload'u yerel agent execution parametrelerine baglandi
 - Son sertlestirme genislemesi: bootstrap key enforcement, edge schema validation ve oldest-job claim duzeltmesi
+- Son dogrulama genislemesi: register -> enqueue -> claim -> execute -> complete entegrasyon testi
 - Canli servis: `http://89.45.45.232:8011/`
 - Canli servis birimi: `dynamic-alert.service`
 - Canli klasor: `/opt/dynamic-alert`
-- Mevcut odak: gercek saha executor davranislari, payload bazli protocol task'lari ve security hardening
+- Mevcut odak: gercek saha executor davranislari, protocol task derinlestirme ve kalan security hardening bosluklari
 
 ## 12. Yeni sohbette kullanilacak kisa komutlar
 

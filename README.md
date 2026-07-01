@@ -104,6 +104,7 @@ Not:
 - `scan`, `passive-observe`, `live-capture` ve demo akislari artik arka plan job'u olarak kuyruga alinir; durum `/api/jobs` ve `/api/jobs/{job_id}` ile izlenir.
 - Arka plan job kayitlari veritabaninda da tutulur; servis yeniden baslasa bile job gecmisi panel ve API uzerinden gorulebilir.
 - Yeni yon: merkezi control plane + edge node modeli. Edge node kaydi, heartbeat, job queue, claim ve result raporlama icin ilk API iskeleti eklendi.
+- [docs/smoke_test_matrix.md](/Users/tahatakgungor/dynamic_alert_project/docs/smoke_test_matrix.md) gercekci saha dogrulama senaryolarini listeler.
 
 ## Edge Agent Ilk Kullanim
 

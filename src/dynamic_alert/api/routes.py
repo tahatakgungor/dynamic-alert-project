@@ -240,7 +240,7 @@ def create_edge_job(
 def list_edge_jobs(
     _: AuthContext = Depends(get_auth_context),
     db: Session = Depends(get_db),
-) -> list[dict[str, str | int | None]]:
+) -> list[dict[str, str | int | dict | None]]:
     jobs = db.query(EdgeJob).order_by(EdgeJob.created_at.desc()).limit(100).all()
     return [
         {
