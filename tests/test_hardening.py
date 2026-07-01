@@ -36,6 +36,15 @@ def test_edge_job_schema_rejects_invalid_enabled_protocols() -> None:
     raise AssertionError("expected enabled_protocols validation error")
 
 
+def test_edge_job_schema_rejects_invalid_mqtt_topics_shape() -> None:
+    try:
+        EdgeJobCreate(edge_node_id=1, job_kind="scan", payload={"mqtt_probe_topics": "factory/#"})
+    except ValueError as exc:
+        assert "mqtt_probe_topics payload" in str(exc)
+        return
+    raise AssertionError("expected mqtt_probe_topics validation error")
+
+
 def test_edge_job_result_schema_rejects_invalid_status() -> None:
     try:
         EdgeJobResultRequest(status="queued")

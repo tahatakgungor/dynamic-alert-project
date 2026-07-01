@@ -413,6 +413,14 @@
               <input id="edgeModbusProbeCount" type="number" min="1" max="32" placeholder="modbus generic probe count">
               <input id="edgeDbusHostname" type="text" placeholder="dbus-demo hostname override">
             </div>
+            <div class="field-row">
+              <input id="edgeModbusProfilesPath" type="text" placeholder="modbus profiles path ornek: configs/modbus_profiles.json">
+              <input id="edgeMqttTopics" type="text" placeholder="mqtt topics ornek: factory/telemetry/#,alerts/#">
+            </div>
+            <div class="field-row">
+              <input id="edgeSnmpSysNameOid" type="text" placeholder="snmp sysName oid override">
+              <input id="edgeSnmpSysDescrOid" type="text" placeholder="snmp sysDescr oid override">
+            </div>
             <button id="edgeJobCreateButton">Edge Job Kuyruga Al</button>
           </div>
         </article>
@@ -643,6 +651,10 @@
     const edgeOpcuaMaxNodes = document.getElementById("edgeOpcuaMaxNodes");
     const edgeModbusProbeCount = document.getElementById("edgeModbusProbeCount");
     const edgeDbusHostname = document.getElementById("edgeDbusHostname");
+    const edgeModbusProfilesPath = document.getElementById("edgeModbusProfilesPath");
+    const edgeMqttTopics = document.getElementById("edgeMqttTopics");
+    const edgeSnmpSysNameOid = document.getElementById("edgeSnmpSysNameOid");
+    const edgeSnmpSysDescrOid = document.getElementById("edgeSnmpSysDescrOid");
     const promoteButtons = document.querySelectorAll(".promoteHypothesisButton");
     const candidateActionButtons = document.querySelectorAll(".candidateActionButton");
     const protocolToggles = document.querySelectorAll(".protocolToggle");
@@ -730,6 +742,18 @@
       }
       if (edgeModbusProbeCount.value) {
         payload.modbus_generic_probe_count = Number(edgeModbusProbeCount.value);
+      }
+      if (edgeModbusProfilesPath.value.trim()) {
+        payload.modbus_profiles_path = edgeModbusProfilesPath.value.trim();
+      }
+      if (edgeMqttTopics.value.trim()) {
+        payload.mqtt_probe_topics = edgeMqttTopics.value.split(",").map((item) => item.trim()).filter(Boolean);
+      }
+      if (edgeSnmpSysNameOid.value.trim()) {
+        payload.snmp_oid_sysname = edgeSnmpSysNameOid.value.trim();
+      }
+      if (edgeSnmpSysDescrOid.value.trim()) {
+        payload.snmp_oid_sysdescr = edgeSnmpSysDescrOid.value.trim();
       }
       if (edgeDbusHostname.value.trim()) {
         payload.hostname = edgeDbusHostname.value.trim();

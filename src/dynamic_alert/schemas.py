@@ -197,6 +197,17 @@ class EdgeJobCreate(BaseModel):
             unknown = [item for item in enabled_protocols if item not in ALLOWED_PROTOCOL_NAMES]
             if unknown:
                 raise ValueError(f"unsupported protocol names: {', '.join(str(item) for item in unknown)}")
+        mqtt_topics = self.payload.get("mqtt_probe_topics")
+        if mqtt_topics is not None:
+            if not isinstance(mqtt_topics, list) or len(mqtt_topics) > 16:
+                raise ValueError("mqtt_probe_topics payload must be a list with at most 16 entries")
+        modbus_profiles_path = self.payload.get("modbus_profiles_path")
+        if modbus_profiles_path is not None and (not isinstance(modbus_profiles_path, str) or len(modbus_profiles_path) > 255):
+            raise ValueError("modbus_profiles_path payload must be a string up to 255 chars")
+        for oid_key in ("snmp_oid_sysdescr", "snmp_oid_sysname", "snmp_oid_uptime"):
+            oid_value = self.payload.get(oid_key)
+            if oid_value is not None and (not isinstance(oid_value, str) or len(oid_value) > 128):
+                raise ValueError(f"{oid_key} payload must be a string up to 128 chars")
         return self
 
 
