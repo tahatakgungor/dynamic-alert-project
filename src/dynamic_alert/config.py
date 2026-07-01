@@ -10,8 +10,15 @@ class Settings(BaseSettings):
     app_name: str = "Dynamic Alert"
     env: str = "development"
     database_url: str = "sqlite:///./dynamic_alert.db"
+    control_plane_url: str = "http://127.0.0.1:8000"
+    edge_node_key: str | None = None
+    edge_node_name: str = "edge-node-local"
+    edge_site_code: str | None = None
+    edge_poll_interval_seconds: float = 5.0
     telegram_bot_token: str | None = None
     telegram_chat_id: str | None = None
+    telegram_api_base: str = "https://api.telegram.org"
+    telegram_timeout_seconds: float = 5.0
     scan_subnets_raw: str = "192.168.1.0/24"
     api_cors_origins_raw: str = "http://127.0.0.1:8000,http://localhost:8000"
     bootstrap_api_key: str = "change-me-before-production"
@@ -35,8 +42,13 @@ class Settings(BaseSettings):
     packet_capture_timeout_seconds: float = 5.0
     packet_capture_max_packets: int = 100
     packet_capture_bpf_filter: str = "tcp or udp"
+    packet_capture_include_link_local: bool = False
     opcua_timeout_seconds: float = 2.0
     opcua_max_nodes: int = 12
+
+    def validate_security(self) -> None:
+        if self.env.lower() != "development" and self.bootstrap_api_key == "change-me-before-production":
+            raise ValueError("bootstrap_api_key must be changed outside development")
 
     @computed_field
     @property

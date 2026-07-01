@@ -90,6 +90,7 @@ Not:
 
 - Yonetimsel endpointler `X-API-Key` ister.
 - Varsayilan bootstrap anahtari sadece gelistirme icindir, uretimde degistirilmelidir.
+- Uretimde uygulama varsayilan `change-me-before-production` bootstrap key ile baslatilmaz.
 - Modbus register profilleri [configs/modbus_profiles.json](/Users/tahatakgungor/dynamic_alert_project/configs/modbus_profiles.json) icinden yonetilir.
 - Profil eslesmezse sistem generic read-only probe ile ham register verisi toplamayi dener.
 - MQTT probe `DYNAMIC_ALERT_MQTT_PROBE_TOPICS` ile, SNMP probe ise community ve timeout ayarlariyla yonetilir.
@@ -98,6 +99,73 @@ Not:
 - Unknown traffic akislari candidate dataset olarak saklanir; bu katman operator onayi ve ileri AI icin temel olur.
 - OPC UA icin generic numeric node okuma girisi vardir; cihaz yapisina gore ileride profile/browse stratejisi gelistirilecektir.
 - Operator semantic map tanimlayabilir; sistem sonraki telemetry akislarinda bu map'i heuristic'in onune koyar.
+- Telegram token tanimliysa notifier gercek `sendMessage` istegi gonderir; token yoksa `dry-run` davranisi devam eder.
+- Alarm kurallari semantic tahmin sonucu uretilecek anahtarlar icin de tetiklenebilir; ornegin ham `dbus_sensor_temperature_raw` akisi `temperature_c` olarak anlamlandirilip kurali tetikleyebilir.
+- `scan`, `passive-observe`, `live-capture` ve demo akislari artik arka plan job'u olarak kuyruga alinir; durum `/api/jobs` ve `/api/jobs/{job_id}` ile izlenir.
+- Arka plan job kayitlari veritabaninda da tutulur; servis yeniden baslasa bile job gecmisi panel ve API uzerinden gorulebilir.
+- Yeni yon: merkezi control plane + edge node modeli. Edge node kaydi, heartbeat, job queue, claim ve result raporlama icin ilk API iskeleti eklendi.
+
+## Edge Agent Ilk Kullanim
+
+Merkezi panelde bir edge node kaydet:
+
+```bash
+dynamic-alert-edge-agent register \
+  --control-plane-url http://127.0.0.1:8000 \
+  --admin-api-key change-me-before-production \
+  --name factory-edge-01 \
+  --site-code HQ-PLANT
+```
+
+Bu komut bir `node_key` dondurur. Sonra edge cihazda tek tur calistir:
+
+```bash
+dynamic-alert-edge-agent run-once \
+  --control-plane-url http://127.0.0.1:8000 \
+  --edge-key EDGE_NODE_KEY
+```
+
+Surekli poll eden agent icin:
+
+```bash
+dynamic-alert-edge-agent run \
+  --control-plane-url http://127.0.0.1:8000 \
+  --edge-key EDGE_NODE_KEY
+```
+
+Edge job payload ile hedefli isler gonderilebilir. Ornekler:
+
+- `scan` icin: `{"scan_subnets": ["10.20.30.0/24"]}`
+- `live-capture` icin:
+  `{"packet_capture_interface":"eth1","packet_capture_timeout_seconds":10,"packet_capture_max_packets":200,"packet_capture_bpf_filter":"tcp port 502"}`
+- `passive-observe` icin custom sample listesi:
+  `{"samples":[{"source_ip":"10.0.0.10","source_port":40001,"destination_ip":"10.0.0.20","destination_port":502,"transport":"tcp","payload_sample":"010300000002"}]}`
+- `dbus-demo` icin:
+  `{"site_code":"HQ-PLANT","ip_address":"192.168.10.50","hostname":"edge-temp-gw","vendor":"Linux Edge Gateway","open_ports":[22,80]}`
+
+## Telegram ve demo smoke test
+
+`.env` icine asgari olarak sunlari koy:
+
+```bash
+DYNAMIC_ALERT_TELEGRAM_BOT_TOKEN=123456:example
+DYNAMIC_ALERT_TELEGRAM_CHAT_ID=123456789
+```
+
+Sonra operator API key ile ornek D-Bus sicaklik akisini tetikle:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/demo/dbus-temperature-alert \
+  -H 'X-API-Key: change-me-before-production'
+```
+
+Bu demo su zinciri calistirir:
+
+1. `dbus_gateway` olarak ornek bir Linux edge cihazini ingest eder.
+2. `dbus_sensor_temperature_raw` telemetry'si uretir.
+3. Semantic katman bunu `temperature_c` olarak yorumlar.
+4. `temperature_c >= 70` kuralini tetikler.
+5. Telegram token varsa gercek mesaj gonderir; yoksa uygulama `dry-run` log'u yazar.
 
 ## Sonraki buyuk adimlar
 

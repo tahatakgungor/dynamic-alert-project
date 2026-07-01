@@ -12,6 +12,7 @@ settings = get_settings()
 
 
 def initialize_platform() -> None:
+    settings.validate_security()
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:

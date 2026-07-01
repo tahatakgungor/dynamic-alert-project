@@ -1,0 +1,25 @@
+from dynamic_alert.config import Settings
+from dynamic_alert.services.job_execution import apply_settings_overrides
+
+
+def test_apply_settings_overrides_updates_scan_and_capture_fields() -> None:
+    settings = Settings()
+
+    updated = apply_settings_overrides(
+        settings,
+        {
+            "scan_subnets": ["10.20.30.0/24", "10.20.31.0/24"],
+            "packet_capture_interface": "eth1",
+            "packet_capture_timeout_seconds": 9,
+            "packet_capture_max_packets": 55,
+            "packet_capture_bpf_filter": "tcp port 502",
+            "packet_capture_include_link_local": True,
+        },
+    )
+
+    assert updated.scan_subnets == ["10.20.30.0/24", "10.20.31.0/24"]
+    assert updated.packet_capture_interface == "eth1"
+    assert updated.packet_capture_timeout_seconds == 9
+    assert updated.packet_capture_max_packets == 55
+    assert updated.packet_capture_bpf_filter == "tcp port 502"
+    assert updated.packet_capture_include_link_local is True

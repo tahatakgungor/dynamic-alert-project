@@ -23,6 +23,9 @@ dependencies = [
   "uvicorn[standard]>=0.30.0",
 ]
 
+[project.scripts]
+dynamic-alert-edge-agent = "dynamic_alert.edge_agent:main"
+
 [project.optional-dependencies]
 dev = [
   "httpx>=0.28.0",

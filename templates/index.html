@@ -112,6 +112,17 @@
       display: grid;
       gap: 10px;
     }
+    .inline-action {
+      margin-top: 8px;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+    }
+    .inline-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
   </style>
 </head>
 <body>
@@ -190,6 +201,35 @@
       </article>
 
       <article class="card">
+        <h2>Arka Plan Isleri</h2>
+        <ul>
+          {% for job in jobs %}
+          <li>
+            <strong>{{ job.kind }}</strong><br>
+            <small>{{ job.actor }} | {{ job.status }}</small><br>
+            <small>{{ job.id }}</small>
+          </li>
+          {% else %}
+          <li>Henuz job yok.</li>
+          {% endfor %}
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>Son Alarm Olaylari</h2>
+        <ul>
+          {% for event in alert_events %}
+          <li>
+            <strong>{{ "delivered" if event.delivered else "pending" }}</strong><br>
+            <small>{{ event.message }}</small>
+          </li>
+          {% else %}
+          <li>Henuz alarm olayi yok.</li>
+          {% endfor %}
+        </ul>
+      </article>
+
+      <article class="card">
         <h2>Entegrasyonlar</h2>
         <ul>
           {% for integration in integrations %}
@@ -204,12 +244,52 @@
       </article>
 
       <article class="card">
+        <h2>Edge Node'lar</h2>
+        <ul>
+          {% for node in edge_nodes %}
+          <li>
+            <strong>{{ node.name }}</strong><br>
+            <small>{{ node.hostname or "-" }} | {{ node.status }}</small><br>
+            <small>{{ node.software_version or "unknown version" }}</small>
+          </li>
+          {% else %}
+          <li>Henuz edge node yok.</li>
+          {% endfor %}
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>Edge Job'lar</h2>
+        <ul>
+          {% for job in edge_jobs %}
+          <li>
+            <strong>{{ job.job_kind }}</strong><br>
+            <small>node #{{ job.edge_node_id }} | {{ job.status }}</small>
+          </li>
+          {% else %}
+          <li>Henuz edge job yok.</li>
+          {% endfor %}
+        </ul>
+      </article>
+
+      <article class="card">
         <h2>Semantic AI</h2>
         <ul>
           {% for hypothesis in semantic_hypotheses %}
           <li>
             <strong>{{ hypothesis.raw_metric_key }}</strong> -> {{ hypothesis.predicted_metric_key }}<br>
             <small>{{ hypothesis.confidence }} | {{ hypothesis.learning_state }}</small>
+            {% if hypothesis.learning_state != "confirmed" %}
+            <br>
+            <button
+              class="inline-action promoteHypothesisButton"
+              data-id="{{ hypothesis.id }}"
+              data-metric-key="{{ hypothesis.predicted_metric_key }}"
+              data-unit="{{ hypothesis.predicted_unit or '' }}"
+            >
+              Bu Hipotezi Map Olarak Onayla
+            </button>
+            {% endif %}
           </li>
           {% else %}
           <li>Henuz semantic hipotez yok.</li>
@@ -260,9 +340,31 @@
             <strong>{{ candidate.candidate_label }}</strong><br>
             <small>{{ candidate.confidence }} | {{ candidate.status }}</small><br>
             <small>{{ candidate.evidence }}</small>
+            {% if candidate.status not in ["confirmed", "dismissed", "escalated"] %}
+            <div class="inline-actions">
+              <button class="inline-action candidateActionButton" data-id="{{ candidate.id }}" data-action="confirm">Onayla</button>
+              <button class="inline-action candidateActionButton" data-id="{{ candidate.id }}" data-action="dismiss">Reddet</button>
+              <button class="inline-action candidateActionButton" data-id="{{ candidate.id }}" data-action="escalate">Escalate</button>
+            </div>
+            {% endif %}
           </li>
           {% else %}
           <li>Henuz unknown candidate yok.</li>
+          {% endfor %}
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>Audit Log</h2>
+        <ul>
+          {% for item in audit_logs %}
+          <li>
+            <strong>{{ item.action }}</strong><br>
+            <small>{{ item.actor }} | {{ item.status }} | {{ item.target }}</small><br>
+            <small>{{ item.details or "-" }}</small>
+          </li>
+          {% else %}
+          <li>Henuz audit log yok.</li>
           {% endfor %}
         </ul>
       </article>
@@ -280,6 +382,33 @@
     const semanticSourceKey = document.getElementById("semanticSourceKey");
     const semanticMetricKey = document.getElementById("semanticMetricKey");
     const semanticUnit = document.getElementById("semanticUnit");
+    const promoteButtons = document.querySelectorAll(".promoteHypothesisButton");
+    const candidateActionButtons = document.querySelectorAll(".candidateActionButton");
+
+    async function pollJob(jobId, label) {
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        const response = await fetch(`/api/jobs/${jobId}`, {
+          headers: {
+            "X-API-Key": apiKeyInput.value.trim(),
+          },
+        });
+        if (!response.ok) {
+          output.textContent = `${label} job durumu alinamadi.`;
+          return;
+        }
+        const payload = await response.json();
+        if (payload.status === "completed") {
+          output.textContent = `${label} tamamlandi. Job: ${jobId}. Sayfayi yenileyin.`;
+          return;
+        }
+        if (payload.status === "failed") {
+          output.textContent = `${label} basarisiz. Hata: ${payload.error}`;
+          return;
+        }
+      }
+      output.textContent = `${label} kuyrukta veya calisiyor. Job: ${jobId}`;
+    }
 
     button.addEventListener("click", async () => {
       const apiKey = apiKeyInput.value.trim();
@@ -299,7 +428,8 @@
         return;
       }
       const payload = await response.json();
-      output.textContent = `Tarama tamamlandi. Yeni cihaz: ${payload.new_devices}, telemetry: ${payload.telemetry_records}. Sayfayi yenileyin.`;
+      output.textContent = `Tarama kuyruga alindi. Job: ${payload.job_id}`;
+      pollJob(payload.job_id, "Tarama");
     });
 
     observeButton.addEventListener("click", async () => {
@@ -320,7 +450,8 @@
         return;
       }
       const payload = await response.json();
-      output.textContent = `Passive observe tamamlandi. Observation: ${payload.observations}, new clusters: ${payload.new_clusters}. Sayfayi yenileyin.`;
+      output.textContent = `Passive observe kuyruga alindi. Job: ${payload.job_id}`;
+      pollJob(payload.job_id, "Passive observe");
     });
 
     liveCaptureButton.addEventListener("click", async () => {
@@ -341,7 +472,8 @@
         return;
       }
       const payload = await response.json();
-      output.textContent = `Live capture tamamlandi. Observation: ${payload.observations}, new clusters: ${payload.new_clusters}. Sayfayi yenileyin.`;
+      output.textContent = `Live capture kuyruga alindi. Job: ${payload.job_id}`;
+      pollJob(payload.job_id, "Live capture");
     });
 
     semanticMapButton.addEventListener("click", async () => {
@@ -376,6 +508,62 @@
       const payload = await response.json();
       output.textContent = `Semantic map kaydedildi: ${payload.source_key} -> ${payload.metric_key}. Sayfayi yenileyin.`;
     });
+
+    for (const promoteButton of promoteButtons) {
+      promoteButton.addEventListener("click", async () => {
+        const apiKey = apiKeyInput.value.trim();
+        if (!apiKey) {
+          output.textContent = "Hipotez onayi icin API anahtari gerekli.";
+          return;
+        }
+        output.textContent = "Hipotez semantic map'e tasiniyor...";
+        const response = await fetch(`/api/semantic-hypotheses/${promoteButton.dataset.id}/promote`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-API-Key": apiKey,
+          },
+          body: JSON.stringify({
+            scope: "device",
+            metric_key: promoteButton.dataset.metricKey,
+            unit: promoteButton.dataset.unit || null,
+          }),
+        });
+        if (!response.ok) {
+          output.textContent = "Hipotez onayi basarisiz.";
+          return;
+        }
+        const payload = await response.json();
+        output.textContent = `Hipotez onaylandi: ${payload.source_key} -> ${payload.metric_key}. Sayfayi yenileyin.`;
+      });
+    }
+
+    for (const actionButton of candidateActionButtons) {
+      actionButton.addEventListener("click", async () => {
+        const apiKey = apiKeyInput.value.trim();
+        if (!apiKey) {
+          output.textContent = "Candidate aksiyonu icin API anahtari gerekli.";
+          return;
+        }
+        output.textContent = `Candidate ${actionButton.dataset.action} islemi gonderiliyor...`;
+        const response = await fetch(`/api/unknown-protocol-candidates/${actionButton.dataset.id}/action`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-API-Key": apiKey,
+          },
+          body: JSON.stringify({
+            action: actionButton.dataset.action,
+          }),
+        });
+        if (!response.ok) {
+          output.textContent = "Candidate aksiyonu basarisiz.";
+          return;
+        }
+        const payload = await response.json();
+        output.textContent = `Candidate guncellendi: ${payload.candidate_label} -> ${payload.status}. Sayfayi yenileyin.`;
+      });
+    }
   </script>
 </body>
 </html>

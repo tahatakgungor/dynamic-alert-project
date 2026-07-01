@@ -33,12 +33,14 @@ Ana riskler:
 1. Telegram ve diger entegrasyon sirlarini sadece ortam degiskeni veya secret manager ile yonetin.
 2. UI ve API icin RBAC ekleyin.
 3. Varsayilan bootstrap API anahtarini ilk kurulumda degistirin.
+   Uygulama production benzeri ortamda bu anahtar degistirilmeden baslatilmamalidir.
 4. CORS allow-list kullanin.
 5. Edge cihazlari VPN veya sifir-guven yaklasimi ile merkezi sisteme baglayin.
 6. Tum protocol adapterlerini default olarak read-only baslatin.
 7. Paket bagimliliklarini duzenli tarayin.
 8. Audit log tutun.
 9. Metrik ve olaylar icin imzali veya dogrulanabilir event zinciri planlayin.
+10. Edge job payload'larini sinirlayin; buyuk veya beklenmeyen payload'lari reddedin.
 
 ## Guvenlik acigi bildirimi
 

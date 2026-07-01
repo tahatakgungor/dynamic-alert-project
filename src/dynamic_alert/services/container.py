@@ -1,8 +1,18 @@
 from sqlalchemy.orm import Session
 
-from dynamic_alert.config import get_settings
+from dynamic_alert.config import Settings, get_settings
+from dynamic_alert.database import SessionLocal
+from dynamic_alert.services.audit import AuditLogService
+from dynamic_alert.services.background_jobs import BackgroundJob, get_background_job_runner
 from dynamic_alert.services.discovery import NetworkDiscoveryService
 from dynamic_alert.services.ingestion import IngestionCoordinator
+from dynamic_alert.services.job_execution import (
+    execute_dbus_demo,
+    execute_live_capture,
+    execute_passive_observe,
+    execute_scan,
+)
+from dynamic_alert.services.passive_observation import PassiveObservationService
 from dynamic_alert.services.protocols.mqtt import MqttAdapter
 from dynamic_alert.services.protocols.dbus import DBusAdapter
 from dynamic_alert.services.protocols.modbus import ModbusAdapter
@@ -15,12 +25,17 @@ from dynamic_alert.services.semantic_intelligence import SemanticIntelligenceSer
 from dynamic_alert.services.telegram import TelegramNotifier
 
 
-def get_ingestion_coordinator(db: Session) -> IngestionCoordinator:
-    settings = get_settings()
+def create_ingestion_coordinator(
+    db: Session,
+    *,
+    settings: Settings | None = None,
+    discovery: NetworkDiscoveryService | None = None,
+) -> IngestionCoordinator:
+    settings = settings or get_settings()
     notifier = TelegramNotifier(settings)
     rule_engine = RuleEngine(db, notifier)
     semantic_intelligence = SemanticIntelligenceService(db, settings)
-    discovery = NetworkDiscoveryService(settings.scan_subnets)
+    discovery = discovery or NetworkDiscoveryService(settings.scan_subnets)
     protocol_registry = ProtocolRegistry(
         [
             ModbusAdapter(settings),
@@ -32,3 +47,72 @@ def get_ingestion_coordinator(db: Session) -> IngestionCoordinator:
         ]
     )
     return IngestionCoordinator(db, discovery, protocol_registry, rule_engine, semantic_intelligence)
+
+
+def get_ingestion_coordinator(db: Session) -> IngestionCoordinator:
+    return create_ingestion_coordinator(db)
+
+
+def enqueue_scan_job(*, actor: str) -> BackgroundJob:
+    runner = get_background_job_runner()
+    return runner.submit(kind="scan", actor=actor, task=lambda: _run_scan_job(actor))
+
+
+def enqueue_passive_observe_job(*, actor: str) -> BackgroundJob:
+    runner = get_background_job_runner()
+    return runner.submit(kind="passive-observe", actor=actor, task=lambda: _run_passive_observe_job(actor))
+
+
+def enqueue_live_capture_job(*, actor: str) -> BackgroundJob:
+    runner = get_background_job_runner()
+    return runner.submit(kind="live-capture", actor=actor, task=lambda: _run_live_capture_job(actor))
+
+
+def enqueue_dbus_demo_job(*, actor: str) -> BackgroundJob:
+    runner = get_background_job_runner()
+    return runner.submit(kind="dbus-demo", actor=actor, task=lambda: _run_dbus_demo_job(actor))
+
+
+def _run_scan_job(actor: str) -> dict[str, int]:
+    db = SessionLocal()
+    try:
+        result = execute_scan(get_ingestion_coordinator(db))
+        AuditLogService(db).record(actor=actor, action="scan.run", target="network", details=str(result))
+        return result
+    finally:
+        db.close()
+
+
+def _run_passive_observe_job(actor: str) -> dict[str, int]:
+    db = SessionLocal()
+    try:
+        result = execute_passive_observe(PassiveObservationService(db, get_settings()))
+        AuditLogService(db).record(actor=actor, action="observe.demo", target="traffic", details=str(result))
+        return result
+    finally:
+        db.close()
+
+
+def _run_live_capture_job(actor: str) -> dict[str, int]:
+    db = SessionLocal()
+    try:
+        result = execute_live_capture(PassiveObservationService(db, get_settings()))
+        AuditLogService(db).record(actor=actor, action="capture.live", target="traffic", details=str(result))
+        return result
+    finally:
+        db.close()
+
+
+def _run_dbus_demo_job(actor: str) -> dict[str, int]:
+    db = SessionLocal()
+    try:
+        result = execute_dbus_demo(get_ingestion_coordinator(db))
+        AuditLogService(db).record(
+            actor=actor,
+            action="demo.dbus-temperature-alert",
+            target="dbus_gateway",
+            details=str(result),
+        )
+        return result
+    finally:
+        db.close()

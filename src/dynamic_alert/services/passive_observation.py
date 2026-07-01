@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+import ipaddress
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -83,20 +84,23 @@ class PassiveObservationService:
         except ImportError:
             return []
 
-        packets = sniff(
-            iface=self.settings.packet_capture_interface or None,
-            timeout=self.settings.packet_capture_timeout_seconds,
-            count=self.settings.packet_capture_max_packets,
-            filter=self.settings.packet_capture_bpf_filter,
-            store=True,
-        )
+        try:
+            packets = sniff(
+                iface=self.settings.packet_capture_interface or None,
+                timeout=max(float(self.settings.packet_capture_timeout_seconds), 0.1),
+                count=max(int(self.settings.packet_capture_max_packets), 1),
+                filter=self.settings.packet_capture_bpf_filter or None,
+                store=True,
+            )
+        except Exception:
+            return []
 
         samples: list[PacketSample] = []
         for packet in packets:
             if IP not in packet:
                 continue
             sample = self._packet_to_sample(packet, ip_cls=IP, tcp_cls=TCP, udp_cls=UDP, raw_cls=Raw)
-            if sample is not None:
+            if sample is not None and self._should_keep_sample(sample):
                 samples.append(sample)
         return samples
 
@@ -152,6 +156,28 @@ class PassiveObservationService:
         if sample.destination_port == 4840:
             return "opc_ua"
         return "unknown"
+
+    def _should_keep_sample(self, sample: PacketSample) -> bool:
+        if self._is_multicast_ip(sample.source_ip) or self._is_multicast_ip(sample.destination_ip):
+            return False
+        if not self.settings.packet_capture_include_link_local:
+            if self._is_link_local_ip(sample.source_ip) or self._is_link_local_ip(sample.destination_ip):
+                return False
+        return True
+
+    @staticmethod
+    def _is_multicast_ip(value: str) -> bool:
+        try:
+            return ipaddress.ip_address(value).is_multicast
+        except ValueError:
+            return False
+
+    @staticmethod
+    def _is_link_local_ip(value: str) -> bool:
+        try:
+            return ipaddress.ip_address(value).is_link_local
+        except ValueError:
+            return False
 
     def sample_demo_traffic(self) -> list[PacketSample]:
         return [

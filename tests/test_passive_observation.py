@@ -35,3 +35,23 @@ def test_passive_observation_creates_observations_and_clusters() -> None:
         cluster = db.query(FlowCluster).one()
         assert cluster.protocol_hint == "modbus_tcp"
         assert db.query(UnknownProtocolCandidate).count() == 1
+
+
+def test_passive_observation_filters_link_local_by_default() -> None:
+    engine = create_engine("sqlite:///:memory:")
+    SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    Base.metadata.create_all(bind=engine)
+
+    with SessionLocal() as db:
+        service = PassiveObservationService(db, Settings())
+        keep = service._should_keep_sample(
+            PacketSample(
+                source_ip="169.254.10.20",
+                source_port=40001,
+                destination_ip="192.168.1.100",
+                destination_port=502,
+                transport="tcp",
+            )
+        )
+
+        assert keep is False

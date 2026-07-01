@@ -1,6 +1,10 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator, model_validator
+
+ALLOWED_EDGE_JOB_KINDS = {"scan", "passive-observe", "live-capture", "dbus-demo"}
+ALLOWED_EDGE_NODE_STATUSES = {"registered", "online", "degraded", "offline"}
+ALLOWED_EDGE_JOB_RESULT_STATUSES = {"completed", "failed"}
 
 
 class DeviceRead(BaseModel):
@@ -112,3 +116,90 @@ class SemanticMapRead(SemanticMapCreate):
 
     class Config:
         from_attributes = True
+
+
+class SemanticHypothesisPromoteRequest(BaseModel):
+    scope: str = "device"
+    metric_key: str | None = None
+    unit: str | None = None
+    notes: str | None = None
+
+
+class UnknownCandidateActionRequest(BaseModel):
+    action: str
+    candidate_label: str | None = None
+    notes: str | None = None
+
+
+class EdgeNodeRegisterRequest(BaseModel):
+    name: str
+    site_code: str | None = None
+    hostname: str | None = None
+    software_version: str | None = None
+
+
+class EdgeNodeHeartbeatRequest(BaseModel):
+    software_version: str | None = None
+    status: str = "online"
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, value: str) -> str:
+        if value not in ALLOWED_EDGE_NODE_STATUSES:
+            raise ValueError("unsupported edge node status")
+        return value
+
+
+class EdgeNodeRead(BaseModel):
+    id: int
+    site_id: int | None
+    name: str
+    hostname: str | None
+    status: str
+    last_seen_at: datetime | None
+    software_version: str | None
+
+    class Config:
+        from_attributes = True
+
+
+class EdgeJobCreate(BaseModel):
+    edge_node_id: int
+    job_kind: str
+    payload: dict | None = None
+
+    @field_validator("job_kind")
+    @classmethod
+    def validate_job_kind(cls, value: str) -> str:
+        if value not in ALLOWED_EDGE_JOB_KINDS:
+            raise ValueError("unsupported edge job kind")
+        return value
+
+    @model_validator(mode="after")
+    def validate_payload_shape(self) -> "EdgeJobCreate":
+        if not self.payload:
+            return self
+        if len(str(self.payload)) > 4096:
+            raise ValueError("payload is too large")
+        samples = self.payload.get("samples")
+        if samples is not None:
+            if not isinstance(samples, list) or len(samples) > 64:
+                raise ValueError("samples payload must be a list with at most 64 items")
+        scan_subnets = self.payload.get("scan_subnets")
+        if scan_subnets is not None:
+            if not isinstance(scan_subnets, list) or len(scan_subnets) > 16:
+                raise ValueError("scan_subnets payload must be a list with at most 16 entries")
+        return self
+
+
+class EdgeJobResultRequest(BaseModel):
+    status: str
+    result: dict | None = None
+    error: str | None = None
+
+    @field_validator("status")
+    @classmethod
+    def validate_result_status(cls, value: str) -> str:
+        if value not in ALLOWED_EDGE_JOB_RESULT_STATUSES:
+            raise ValueError("unsupported edge job result status")
+        return value

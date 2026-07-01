@@ -13,4 +13,7 @@ def test_audit_log_service_records_entries() -> None:
 
     with SessionLocal() as db:
         AuditLogService(db).record(actor="tester", action="scan.run", target="network", details="ok")
-        assert db.query(AuditLog).count() == 1
+        item = db.query(AuditLog).one()
+        assert item.actor == "tester"
+        assert item.action == "scan.run"
+        assert item.status == "ok"

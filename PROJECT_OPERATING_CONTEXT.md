@@ -70,8 +70,22 @@ Gercekci uygulama su katmanlarla olur:
 - OPC UA adapteri eklendi
 - passive observation ve flow cluster omurgasi baslatildi
 - scapy tabanli live capture girisi eklendi
+- live capture icin sniff exception fallback ve link-local/multicast filtreleme eklendi
 - unknown protocol candidate dataset katmani eklendi
+- unknown protocol enrichment icin port-spesifik ve payload-pattern heuristic'leri genisletildi
 - audit log temeli eklendi
+- Telegram notifier gercek HTTP `sendMessage` akisina gecirildi
+- semantic tahmin sonucu ureten metric key'ler icin alert evaluation destegi eklendi
+- D-Bus demo sicaklik -> semantic -> Telegram smoke test endpoint'i eklendi
+- semantic hypothesis -> semantic map promote operator workflow'u eklendi
+- alert.triggered audit kaydi ve dashboard'da alert/audit gorunurlugu eklendi
+- unknown protocol candidate icin confirm / dismiss / escalate operator workflow'u eklendi
+- scan / observe / capture / demo akislarinda in-process background job queue ve status endpoint'leri eklendi
+- background job kayitlari veritabanina tasindi; job gecmisi restart sonrasi korunuyor
+- control plane + edge node yonu icin edge node register / heartbeat / job claim / result raporlama iskeleti eklendi
+- edge runtime API'lerini kullanan ilk `dynamic-alert-edge-agent` CLI eklendi
+- edge job payload'lari scan subneti, capture interface/filter ve demo cihaz parametrelerini gercekten etkiler hale getirildi
+- production ortaminda varsayilan bootstrap key reddi, edge payload limitleri ve status/job kind dogrulamalari eklendi
 - operator feedback ile semantic map persistence eklendi
 
 ### AI / semantic katman
@@ -158,10 +172,21 @@ Her yeni sohbette ve her yeni gorevde bu kurallara uy:
 - Son protokol genislemesi: OPC UA
 - Son operasyon genislemesi: audit log
 - Son ogrenme genislemesi: semantic map persistence
+- Son candidate enrichment genislemesi: S7 / EtherNet-IP / plaintext topic-value heuristic'leri
+- Son alerting genislemesi: semantic metric üzerinden kural tetikleme + gercek Telegram notifier
+- Son semantic workflow genislemesi: hipotezi panelden tek tikla kalici map'e promote etme
+- Son operasyon genislemesi: panelde son alert event ve audit log gorunurlugu
+- Son candidate workflow genislemesi: operator lock eden confirm / dismiss / escalate aksiyonlari
+- Son runtime genislemesi: request path'ten ayri arka plan job calistirma ve job status takibi
+- Son kalicilik genislemesi: `background_jobs` tablosu ve DB-backed worker status takibi
+- Son mimari genisleme: merkezi panelden yonetilen edge node ve edge job temel modeli
+- Son agent genislemesi: register / run-once / run modlari olan edge agent poller CLI
+- Son executor genislemesi: edge job payload'u yerel agent execution parametrelerine baglandi
+- Son sertlestirme genislemesi: bootstrap key enforcement, edge schema validation ve oldest-job claim duzeltmesi
 - Canli servis: `http://89.45.45.232:8011/`
 - Canli servis birimi: `dynamic-alert.service`
 - Canli klasor: `/opt/dynamic-alert`
-- Mevcut odak: candidate enrichment, semantic map workflow ve canli guvenlik sertlestirme
+- Mevcut odak: gercek saha executor davranislari, payload bazli protocol task'lari ve security hardening
 
 ## 12. Yeni sohbette kullanilacak kisa komutlar
 

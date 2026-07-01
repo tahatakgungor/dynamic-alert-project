@@ -46,3 +46,44 @@ def test_operator_semantic_map_overrides_heuristic() -> None:
         assert hypothesis.predicted_metric_key == "line_temperature_c"
         assert hypothesis.learning_state == "confirmed"
         assert db.query(SemanticMap).count() == 1
+
+
+def test_promote_hypothesis_creates_semantic_map_and_confirms_hypothesis() -> None:
+    engine = create_engine("sqlite:///:memory:")
+    SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    Base.metadata.create_all(bind=engine)
+
+    with SessionLocal() as db:
+        device = Device(ip_address="192.168.1.40", hostname="dbus-gateway", vendor="Industrial IPC", status="online")
+        db.add(device)
+        db.commit()
+        db.refresh(device)
+
+        telemetry = TelemetryRecord(
+            device_id=device.id,
+            metric_key="dbus_sensor_temperature_raw",
+            value=71.0,
+            unit="C",
+            source_protocol="dbus_gateway",
+        )
+        db.add(telemetry)
+        db.commit()
+        db.refresh(telemetry)
+
+        hypothesis = SemanticIntelligenceService(db, Settings()).learn_from_telemetry(telemetry)
+        assert hypothesis is not None
+        assert hypothesis.learning_state == "learning"
+
+        mapped = SemanticMapService(db).promote_hypothesis(
+            hypothesis_id=hypothesis.id,
+            scope="device",
+            notes="operator approved",
+        )
+
+        db.refresh(hypothesis)
+        assert mapped.protocol_name == "dbus_gateway"
+        assert mapped.source_key == "dbus_sensor_temperature_raw"
+        assert mapped.metric_key == "temperature_c"
+        assert hypothesis.learning_state == "confirmed"
+        assert hypothesis.confidence == 1.0
+        assert db.query(SemanticMap).count() == 1

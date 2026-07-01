@@ -4,7 +4,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from dynamic_alert.models import Device, SemanticMap, TelemetryRecord
+from dynamic_alert.models import Device, SemanticHypothesis, SemanticMap, TelemetryRecord
 
 
 class SemanticMapService:
@@ -91,3 +91,50 @@ class SemanticMapService:
         self.db.commit()
         self.db.refresh(mapped)
         return mapped
+
+    def promote_hypothesis(
+        self,
+        *,
+        hypothesis_id: int,
+        scope: str,
+        metric_key: str | None = None,
+        unit: str | None = None,
+        notes: str | None = None,
+    ) -> SemanticMap:
+        hypothesis = self.db.query(SemanticHypothesis).filter(SemanticHypothesis.id == hypothesis_id).one()
+        device = self.db.query(Device).filter(Device.id == hypothesis.device_id).one_or_none()
+        protocol_name = self._infer_protocol_name_from_raw_key(hypothesis.raw_metric_key)
+
+        mapped = self.upsert_operator_map(
+            scope=scope,
+            device_id=hypothesis.device_id if scope == "device" else None,
+            vendor=device.vendor if scope == "vendor" and device is not None else None,
+            protocol_name=protocol_name,
+            source_key=hypothesis.raw_metric_key,
+            metric_key=metric_key or hypothesis.predicted_metric_key,
+            unit=unit if unit is not None else hypothesis.predicted_unit,
+            notes=notes,
+        )
+
+        hypothesis.learning_state = "confirmed"
+        hypothesis.predicted_metric_key = mapped.metric_key
+        hypothesis.predicted_unit = mapped.unit
+        hypothesis.confidence = 1.0
+        hypothesis.evidence = f"promoted to semantic map scope={mapped.scope}"
+        hypothesis.updated_at = datetime.utcnow()
+        self.db.commit()
+        self.db.refresh(hypothesis)
+        return mapped
+
+    @staticmethod
+    def _infer_protocol_name_from_raw_key(raw_key: str) -> str:
+        prefix = raw_key.split("_", 1)[0].strip().lower()
+        protocol_aliases = {
+            "mqtt": "mqtt",
+            "modbus": "modbus_tcp",
+            "snmp": "snmp",
+            "opcua": "opc_ua",
+            "opc": "opc_ua",
+            "dbus": "dbus_gateway",
+        }
+        return protocol_aliases.get(prefix, prefix or "unknown")
