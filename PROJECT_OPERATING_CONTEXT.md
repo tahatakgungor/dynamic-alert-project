@@ -91,6 +91,7 @@ Gercekci uygulama su katmanlarla olur:
 - Modbus register yorumlamasi icin isimlendirilmis profile set katalogu ve panel secimi eklendi
 - MQTT topic ve SNMP OID secimleri icin isimlendirilmis katalog omurgasi eklendi
 - protocol catalog secimi ile raw override cakismalarini reddeden precedence guard eklendi
+- named protocol catalog payload'lari icin edge scan roundtrip smoke testi eklendi
 - panelde kullanici dostu edge orchestration formu ve ozet metrikler eklendi
 - operator feedback ile semantic map persistence eklendi
 
@@ -193,6 +194,7 @@ Her yeni sohbette ve her yeni gorevde bu kurallara uy:
 - Son orchestration genislemesi: job bazli protocol secimi ve probe tuning
 - Son protocol catalog genislemesi: named Modbus profile set secimi ve structured profile repository
 - Son protocol catalog genislemesi: named MQTT topic set ve SNMP OID set secimi
+- Son dogrulama genislemesi: catalog-secimli edge scan payload'inin roundtrip smoke testi
 - Son UI genislemesi: orchestration odakli daha anlasilir kontrol paneli
 - Canli servis: `http://89.45.45.232:8011/`
 - Canli servis birimi: `dynamic-alert.service`

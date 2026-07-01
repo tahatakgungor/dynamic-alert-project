@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -121,3 +122,93 @@ def test_control_plane_edge_roundtrip_executes_dbus_demo(tmp_path, monkeypatch) 
         assert alerts.status_code == 200
         alert_payload = alerts.json()
         assert any("temperature_c" in item["message"] for item in alert_payload)
+
+
+def test_control_plane_edge_roundtrip_applies_catalog_scan_payload(tmp_path, monkeypatch) -> None:
+    db_path = tmp_path / "scan-smoke.sqlite3"
+    engine = create_engine(
+        f"sqlite:///{db_path}",
+        connect_args={"check_same_thread": False},
+    )
+    test_session_local = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+
+    monkeypatch.setattr(database_module, "engine", engine)
+    monkeypatch.setattr(database_module, "SessionLocal", test_session_local)
+    monkeypatch.setattr(main_module, "engine", engine)
+    monkeypatch.setattr(main_module, "SessionLocal", test_session_local)
+
+    import dynamic_alert.edge_agent as edge_agent_module
+    from dynamic_alert.edge_agent import EdgeAgentRunner
+    from dynamic_alert.config import Settings
+
+    monkeypatch.setattr(edge_agent_module, "SessionLocal", test_session_local)
+    monkeypatch.setattr(edge_agent_module, "engine", engine)
+
+    captured: dict[str, object] = {}
+
+    def fake_create_ingestion_coordinator(db, *, settings, discovery=None, enabled_protocol_names=None):
+        captured["scan_subnets"] = settings.scan_subnets
+        captured["modbus_profile_set"] = settings.modbus_profile_set
+        captured["mqtt_topic_set"] = settings.mqtt_topic_set
+        captured["snmp_oid_set"] = settings.snmp_oid_set
+        captured["enabled_protocol_names"] = enabled_protocol_names
+        captured["discovery_subnets"] = getattr(discovery, "subnets", None)
+        return SimpleNamespace()
+
+    monkeypatch.setattr(edge_agent_module, "create_ingestion_coordinator", fake_create_ingestion_coordinator)
+    monkeypatch.setattr(edge_agent_module, "execute_scan", lambda coordinator: {"new_devices": 0, "telemetry_records": 0})
+
+    with TestClient(app) as client:
+        register = client.post(
+            "/api/edge/register",
+            headers={"X-API-Key": "change-me-before-production"},
+            json={
+                "name": "factory-edge-02",
+                "site_code": "HQ-PLANT",
+                "hostname": "factory-edge-host-02",
+                "software_version": "0.1.0",
+            },
+        )
+        assert register.status_code == 200
+        edge_payload = register.json()
+        edge_key = edge_payload["node_key"]
+        edge_node_id = edge_payload["id"]
+
+        enqueue = client.post(
+            "/api/edge-jobs",
+            headers={"X-API-Key": "change-me-before-production"},
+            json={
+                "edge_node_id": edge_node_id,
+                "job_kind": "scan",
+                "payload": {
+                    "scan_subnets": ["10.20.30.0/24"],
+                    "enabled_protocols": ["modbus_tcp", "snmp", "mqtt"],
+                    "modbus_profile_set": "generic_plc",
+                    "mqtt_topic_set": "telemetry_focus",
+                    "snmp_oid_set": "standard_mib2",
+                },
+            },
+        )
+        assert enqueue.status_code == 200
+
+        runner = EdgeAgentRunner(
+            settings=Settings(edge_node_name="factory-edge-02"),
+            client=SmokeEdgeClient(client, edge_key=edge_key),  # type: ignore[arg-type]
+        )
+        result = runner.run_once()
+
+        assert result["status"] == "completed"
+        assert result["job_kind"] == "scan"
+        assert captured == {
+            "scan_subnets": ["10.20.30.0/24"],
+            "modbus_profile_set": "generic_plc",
+            "mqtt_topic_set": "telemetry_focus",
+            "snmp_oid_set": "standard_mib2",
+            "enabled_protocol_names": ["modbus_tcp", "snmp", "mqtt"],
+            "discovery_subnets": ["10.20.30.0/24"],
+        }
+
+        edge_jobs = client.get("/api/edge-jobs", headers={"X-API-Key": "change-me-before-production"})
+        assert edge_jobs.status_code == 200
+        jobs_payload = edge_jobs.json()
+        assert jobs_payload[0]["status"] == "completed"
