@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 ALLOWED_EDGE_JOB_KINDS = {"scan", "passive-observe", "live-capture", "dbus-demo"}
 ALLOWED_EDGE_NODE_STATUSES = {"registered", "online", "degraded", "offline"}
@@ -9,6 +9,8 @@ ALLOWED_PROTOCOL_NAMES = {"modbus_tcp", "snmp", "mqtt", "opc_ua", "dbus_gateway"
 
 
 class DeviceRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     site_id: int | None
     ip_address: str
@@ -16,11 +18,10 @@ class DeviceRead(BaseModel):
     vendor: str | None
     status: str
 
-    class Config:
-        from_attributes = True
-
 
 class TelemetryRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     device_id: int
     metric_key: str
@@ -29,9 +30,6 @@ class TelemetryRead(BaseModel):
     quality: str
     source_protocol: str
     observed_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class AlertRuleCreate(BaseModel):
@@ -45,33 +43,32 @@ class AlertRuleCreate(BaseModel):
 
 
 class AlertRuleRead(AlertRuleCreate):
-    id: int
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        from_attributes = True
+    id: int
 
 
 class WorkspaceRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: str
     slug: str
 
-    class Config:
-        from_attributes = True
-
 
 class SiteRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     workspace_id: int
     name: str
     code: str
     timezone: str
 
-    class Config:
-        from_attributes = True
-
 
 class IntegrationEndpointRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     site_id: int
     name: str
@@ -79,11 +76,10 @@ class IntegrationEndpointRead(BaseModel):
     status: str
     target_ref: str | None
 
-    class Config:
-        from_attributes = True
-
 
 class SemanticHypothesisRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     device_id: int
     raw_metric_key: str
@@ -94,9 +90,6 @@ class SemanticHypothesisRead(BaseModel):
     learning_state: str
     last_observed_value: float | None
     observation_count: int
-
-    class Config:
-        from_attributes = True
 
 
 class SemanticMapCreate(BaseModel):
@@ -111,12 +104,11 @@ class SemanticMapCreate(BaseModel):
 
 
 class SemanticMapRead(SemanticMapCreate):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     confidence: float
     source_kind: str
-
-    class Config:
-        from_attributes = True
 
 
 class SemanticHypothesisPromoteRequest(BaseModel):
@@ -152,6 +144,8 @@ class EdgeNodeHeartbeatRequest(BaseModel):
 
 
 class EdgeNodeRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     site_id: int | None
     name: str
@@ -160,8 +154,12 @@ class EdgeNodeRead(BaseModel):
     last_seen_at: datetime | None
     software_version: str | None
 
-    class Config:
-        from_attributes = True
+
+class EdgeNodeRegisterResponse(BaseModel):
+    id: int
+    name: str
+    node_key: str
+    site_id: int | None
 
 
 class EdgeJobCreate(BaseModel):
@@ -213,3 +211,24 @@ class EdgeJobResultRequest(BaseModel):
         if value not in ALLOWED_EDGE_JOB_RESULT_STATUSES:
             raise ValueError("unsupported edge job result status")
         return value
+
+
+class EdgeJobRead(BaseModel):
+    id: int
+    edge_node_id: int
+    job_kind: str
+    status: str
+    payload: dict | None = None
+    error: str | None = None
+
+
+class BackgroundJobRead(BaseModel):
+    id: str
+    kind: str
+    actor: str
+    status: str
+    submitted_at: str
+    started_at: str | None = None
+    finished_at: str | None = None
+    result: dict | None = None
+    error: str | None = None

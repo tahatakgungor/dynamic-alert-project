@@ -31,10 +31,13 @@ from dynamic_alert.models import (
 from dynamic_alert.schemas import (
     AlertRuleCreate,
     AlertRuleRead,
+    BackgroundJobRead,
     DeviceRead,
     EdgeJobCreate,
+    EdgeJobRead,
     EdgeJobResultRequest,
     EdgeNodeHeartbeatRequest,
+    EdgeNodeRegisterResponse,
     EdgeNodeRead,
     EdgeNodeRegisterRequest,
     IntegrationEndpointRead,
@@ -189,7 +192,7 @@ def list_edge_nodes(
     return db.query(EdgeNode).order_by(EdgeNode.last_seen_at.desc().nullslast()).all()
 
 
-@router.post("/api/edge/register")
+@router.post("/api/edge/register", response_model=EdgeNodeRegisterResponse)
 def register_edge_node(
     payload: EdgeNodeRegisterRequest,
     auth: AuthContext = Depends(require_admin),
@@ -222,7 +225,7 @@ def edge_heartbeat(
     return EdgeRuntimeService(db).heartbeat(node=node, status=payload.status, software_version=payload.software_version)
 
 
-@router.post("/api/edge-jobs")
+@router.post("/api/edge-jobs", response_model=EdgeJobRead)
 def create_edge_job(
     payload: EdgeJobCreate,
     auth: AuthContext = Depends(require_operator),
@@ -245,7 +248,7 @@ def create_edge_job(
     return {"id": job.id, "edge_node_id": job.edge_node_id, "status": job.status, "job_kind": job.job_kind}
 
 
-@router.get("/api/edge-jobs")
+@router.get("/api/edge-jobs", response_model=list[EdgeJobRead])
 def list_edge_jobs(
     _: AuthContext = Depends(get_auth_context),
     db: Session = Depends(get_db),
@@ -495,16 +498,16 @@ def who_am_i(auth: AuthContext = Depends(get_auth_context)) -> dict[str, str | i
     return {"client_id": auth.client_id, "name": auth.name, "role": auth.role}
 
 
-@router.get("/api/jobs")
+@router.get("/api/jobs", response_model=list[BackgroundJobRead])
 def list_jobs(_: AuthContext = Depends(get_auth_context)) -> list[dict[str, str | dict | None]]:
     return [job.to_dict() for job in get_background_job_runner().list_recent(limit=100)]
 
 
-@router.get("/api/jobs/{job_id}")
+@router.get("/api/jobs/{job_id}", response_model=BackgroundJobRead)
 def get_job(job_id: str, _: AuthContext = Depends(get_auth_context)) -> dict[str, str | dict | None]:
     job = get_background_job_runner().get(job_id)
     if job is None:
-        return {"id": job_id, "status": "missing", "error": "job not found"}
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="job not found")
     return job.to_dict()
 
 
