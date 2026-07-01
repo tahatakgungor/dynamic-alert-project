@@ -14,6 +14,9 @@ def test_apply_settings_overrides_updates_scan_and_capture_fields() -> None:
             "packet_capture_max_packets": 55,
             "packet_capture_bpf_filter": "tcp port 502",
             "packet_capture_include_link_local": True,
+            "modbus_generic_probe_count": 8,
+            "mqtt_probe_max_messages": 6,
+            "opcua_max_nodes": 20,
         },
     )
 
@@ -23,3 +26,6 @@ def test_apply_settings_overrides_updates_scan_and_capture_fields() -> None:
     assert updated.packet_capture_max_packets == 55
     assert updated.packet_capture_bpf_filter == "tcp port 502"
     assert updated.packet_capture_include_link_local is True
+    assert updated.modbus_generic_probe_count == 8
+    assert updated.mqtt_probe_max_messages == 6
+    assert updated.opcua_max_nodes == 20

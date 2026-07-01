@@ -25,6 +25,24 @@ def apply_settings_overrides(settings: Settings, payload: dict[str, Any] | None)
         updates["packet_capture_bpf_filter"] = payload["packet_capture_bpf_filter"]
     if "packet_capture_include_link_local" in payload:
         updates["packet_capture_include_link_local"] = bool(payload["packet_capture_include_link_local"])
+    if "modbus_generic_probe_enabled" in payload:
+        updates["modbus_generic_probe_enabled"] = bool(payload["modbus_generic_probe_enabled"])
+    if "modbus_generic_probe_count" in payload:
+        updates["modbus_generic_probe_count"] = max(1, min(int(payload["modbus_generic_probe_count"]), 32))
+    if "modbus_timeout_seconds" in payload:
+        updates["modbus_timeout_seconds"] = max(0.1, min(float(payload["modbus_timeout_seconds"]), 10.0))
+    if "mqtt_probe_topics" in payload and isinstance(payload["mqtt_probe_topics"], list):
+        updates["mqtt_probe_topics_raw"] = ",".join(str(item) for item in payload["mqtt_probe_topics"] if str(item).strip())
+    if "mqtt_probe_timeout_seconds" in payload:
+        updates["mqtt_probe_timeout_seconds"] = max(0.1, min(float(payload["mqtt_probe_timeout_seconds"]), 15.0))
+    if "mqtt_probe_max_messages" in payload:
+        updates["mqtt_probe_max_messages"] = max(1, min(int(payload["mqtt_probe_max_messages"]), 20))
+    if "snmp_timeout_seconds" in payload:
+        updates["snmp_timeout_seconds"] = max(0.1, min(float(payload["snmp_timeout_seconds"]), 10.0))
+    if "opcua_timeout_seconds" in payload:
+        updates["opcua_timeout_seconds"] = max(0.1, min(float(payload["opcua_timeout_seconds"]), 15.0))
+    if "opcua_max_nodes" in payload:
+        updates["opcua_max_nodes"] = max(1, min(int(payload["opcua_max_nodes"]), 64))
 
     return settings.model_copy(update=updates)
 

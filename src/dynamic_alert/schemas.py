@@ -5,6 +5,7 @@ from pydantic import BaseModel, field_validator, model_validator
 ALLOWED_EDGE_JOB_KINDS = {"scan", "passive-observe", "live-capture", "dbus-demo"}
 ALLOWED_EDGE_NODE_STATUSES = {"registered", "online", "degraded", "offline"}
 ALLOWED_EDGE_JOB_RESULT_STATUSES = {"completed", "failed"}
+ALLOWED_PROTOCOL_NAMES = {"modbus_tcp", "snmp", "mqtt", "opc_ua", "dbus_gateway", "raw_tcp"}
 
 
 class DeviceRead(BaseModel):
@@ -189,6 +190,15 @@ class EdgeJobCreate(BaseModel):
         if scan_subnets is not None:
             if not isinstance(scan_subnets, list) or len(scan_subnets) > 16:
                 raise ValueError("scan_subnets payload must be a list with at most 16 entries")
+        enabled_protocols = self.payload.get("enabled_protocols")
+        if enabled_protocols is not None:
+            if not isinstance(enabled_protocols, list) or not enabled_protocols:
+                raise ValueError("enabled_protocols payload must be a non-empty list")
+            if len(enabled_protocols) > len(ALLOWED_PROTOCOL_NAMES):
+                raise ValueError("enabled_protocols payload is too large")
+            unknown = [item for item in enabled_protocols if item not in ALLOWED_PROTOCOL_NAMES]
+            if unknown:
+                raise ValueError(f"unsupported protocol names: {', '.join(str(item) for item in unknown)}")
         return self
 
 

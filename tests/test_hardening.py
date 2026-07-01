@@ -27,6 +27,15 @@ def test_edge_job_schema_rejects_invalid_job_kind() -> None:
     raise AssertionError("expected edge job kind validation error")
 
 
+def test_edge_job_schema_rejects_invalid_enabled_protocols() -> None:
+    try:
+        EdgeJobCreate(edge_node_id=1, job_kind="scan", payload={"enabled_protocols": ["ssh"]})
+    except ValueError as exc:
+        assert "unsupported protocol names" in str(exc)
+        return
+    raise AssertionError("expected enabled_protocols validation error")
+
+
 def test_edge_job_result_schema_rejects_invalid_status() -> None:
     try:
         EdgeJobResultRequest(status="queued")

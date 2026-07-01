@@ -129,16 +129,32 @@ class EdgeAgentRunner:
     def _execute_job(self, job_kind: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
         db = SessionLocal()
         try:
+            payload = payload or {}
             effective_settings = apply_settings_overrides(self.settings, payload)
+            enabled_protocol_names = payload.get("enabled_protocols")
             if job_kind == "scan":
                 discovery = NetworkDiscoveryService(effective_settings.scan_subnets)
-                result = execute_scan(create_ingestion_coordinator(db, settings=effective_settings, discovery=discovery))
+                result = execute_scan(
+                    create_ingestion_coordinator(
+                        db,
+                        settings=effective_settings,
+                        discovery=discovery,
+                        enabled_protocol_names=enabled_protocol_names if isinstance(enabled_protocol_names, list) else None,
+                    )
+                )
             elif job_kind == "passive-observe":
                 result = execute_passive_observe(PassiveObservationService(db, effective_settings), payload)
             elif job_kind == "live-capture":
                 result = execute_live_capture(PassiveObservationService(db, effective_settings))
             elif job_kind == "dbus-demo":
-                result = execute_dbus_demo(create_ingestion_coordinator(db, settings=effective_settings), payload)
+                result = execute_dbus_demo(
+                    create_ingestion_coordinator(
+                        db,
+                        settings=effective_settings,
+                        enabled_protocol_names=enabled_protocol_names if isinstance(enabled_protocol_names, list) else None,
+                    ),
+                    payload,
+                )
             else:
                 raise ValueError(f"unsupported edge job kind: {job_kind}")
             AuditLogService(db).record(actor=self.settings.edge_node_name, action=f"edge-agent.{job_kind}", target="local", details=str(result))

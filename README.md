@@ -144,6 +144,12 @@ Edge job payload ile hedefli isler gonderilebilir. Ornekler:
 - `dbus-demo` icin:
   `{"site_code":"HQ-PLANT","ip_address":"192.168.10.50","hostname":"edge-temp-gw","vendor":"Linux Edge Gateway","open_ports":[22,80]}`
 
+Ek olarak `enabled_protocols` ile scan veya demo job'larinda hangi adapter'larin aktif olacagi secilebilir:
+
+- `{"enabled_protocols":["modbus_tcp","snmp","mqtt"]}`
+
+Panel tarafinda artik bir `Edge Orchestration` formu vardir; edge node secimi, protocol toggle'lari ve temel probe tuning alanlariyla JSON yazmadan job olusturulabilir.
+
 ## Telegram ve demo smoke test
 
 `.env` icine asgari olarak sunlari koy:

@@ -49,6 +49,7 @@ from dynamic_alert.schemas import (
 )
 from dynamic_alert.services.background_jobs import get_background_job_runner
 from dynamic_alert.services.container import (
+    PROTOCOL_ADAPTER_ORDER,
     enqueue_dbus_demo_job,
     enqueue_live_capture_job,
     enqueue_passive_observe_job,
@@ -96,6 +97,12 @@ def dashboard(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
     unknown_candidates = db.query(UnknownProtocolCandidate).order_by(UnknownProtocolCandidate.updated_at.desc()).limit(10).all()
     alert_events = db.query(AlertEvent).order_by(AlertEvent.created_at.desc()).limit(10).all()
     audit_logs = db.query(AuditLog).order_by(AuditLog.created_at.desc()).limit(12).all()
+    overview = {
+        "device_count": db.query(Device).count(),
+        "edge_node_count": db.query(EdgeNode).count(),
+        "telemetry_count": db.query(TelemetryRecord).count(),
+        "alert_count": db.query(AlertEvent).count(),
+    }
     return templates.TemplateResponse(
         request,
         "index.html",
@@ -114,6 +121,8 @@ def dashboard(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
             "alert_events": alert_events,
             "audit_logs": audit_logs,
             "jobs": jobs,
+            "overview": overview,
+            "available_protocols": PROTOCOL_ADAPTER_ORDER,
         },
     )
 

@@ -87,6 +87,8 @@ Gercekci uygulama su katmanlarla olur:
 - edge job payload'lari scan subneti, capture interface/filter ve demo cihaz parametrelerini gercekten etkiler hale getirildi
 - production ortaminda varsayilan bootstrap key reddi, edge payload limitleri ve status/job kind dogrulamalari eklendi
 - control plane <-> edge agent tam roundtrip smoke testi ve saha smoke matrix dokumani eklendi
+- edge job payload'inda `enabled_protocols` ve probe tuning alanlariyla protocol orchestration eklendi
+- panelde kullanici dostu edge orchestration formu ve ozet metrikler eklendi
 - operator feedback ile semantic map persistence eklendi
 
 ### AI / semantic katman
@@ -185,10 +187,12 @@ Her yeni sohbette ve her yeni gorevde bu kurallara uy:
 - Son executor genislemesi: edge job payload'u yerel agent execution parametrelerine baglandi
 - Son sertlestirme genislemesi: bootstrap key enforcement, edge schema validation ve oldest-job claim duzeltmesi
 - Son dogrulama genislemesi: register -> enqueue -> claim -> execute -> complete entegrasyon testi
+- Son orchestration genislemesi: job bazli protocol secimi ve probe tuning
+- Son UI genislemesi: orchestration odakli daha anlasilir kontrol paneli
 - Canli servis: `http://89.45.45.232:8011/`
 - Canli servis birimi: `dynamic-alert.service`
 - Canli klasor: `/opt/dynamic-alert`
-- Mevcut odak: gercek saha executor davranislari, protocol task derinlestirme ve kalan security hardening bosluklari
+- Mevcut odak: protocol task derinlestirme, saha smoke testleri ve kalan security hardening bosluklari
 
 ## 12. Yeni sohbette kullanilacak kisa komutlar
 

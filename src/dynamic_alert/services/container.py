@@ -24,19 +24,18 @@ from dynamic_alert.services.rule_engine import RuleEngine
 from dynamic_alert.services.semantic_intelligence import SemanticIntelligenceService
 from dynamic_alert.services.telegram import TelegramNotifier
 
+PROTOCOL_ADAPTER_ORDER = [
+    "modbus_tcp",
+    "snmp",
+    "mqtt",
+    "opc_ua",
+    "dbus_gateway",
+    "raw_tcp",
+]
 
-def create_ingestion_coordinator(
-    db: Session,
-    *,
-    settings: Settings | None = None,
-    discovery: NetworkDiscoveryService | None = None,
-) -> IngestionCoordinator:
-    settings = settings or get_settings()
-    notifier = TelegramNotifier(settings)
-    rule_engine = RuleEngine(db, notifier)
-    semantic_intelligence = SemanticIntelligenceService(db, settings)
-    discovery = discovery or NetworkDiscoveryService(settings.scan_subnets)
-    protocol_registry = ProtocolRegistry(
+
+def create_protocol_registry(settings: Settings, *, enabled_protocol_names: list[str] | None = None) -> ProtocolRegistry:
+    registry = ProtocolRegistry(
         [
             ModbusAdapter(settings),
             SnmpAdapter(settings),
@@ -46,6 +45,22 @@ def create_ingestion_coordinator(
             TcpAdapter(),
         ]
     )
+    return registry.select(enabled_protocol_names)
+
+
+def create_ingestion_coordinator(
+    db: Session,
+    *,
+    settings: Settings | None = None,
+    discovery: NetworkDiscoveryService | None = None,
+    enabled_protocol_names: list[str] | None = None,
+) -> IngestionCoordinator:
+    settings = settings or get_settings()
+    notifier = TelegramNotifier(settings)
+    rule_engine = RuleEngine(db, notifier)
+    semantic_intelligence = SemanticIntelligenceService(db, settings)
+    discovery = discovery or NetworkDiscoveryService(settings.scan_subnets)
+    protocol_registry = create_protocol_registry(settings, enabled_protocol_names=enabled_protocol_names)
     return IngestionCoordinator(db, discovery, protocol_registry, rule_engine, semantic_intelligence)
 
 
