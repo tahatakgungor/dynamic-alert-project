@@ -8,7 +8,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from dynamic_alert import database as database_module
-from dynamic_alert.models import AlertEvent, TelemetryRecord
+from dynamic_alert.models import AlertEvent, SemanticHypothesis, TelemetryRecord
 from dynamic_alert.main import app
 import dynamic_alert.main as main_module
 
@@ -212,3 +212,111 @@ def test_control_plane_edge_roundtrip_applies_catalog_scan_payload(tmp_path, mon
         assert edge_jobs.status_code == 200
         jobs_payload = edge_jobs.json()
         assert jobs_payload[0]["status"] == "completed"
+
+
+def test_control_plane_edge_catalog_scan_reaches_semantic_alert_flow(tmp_path, monkeypatch) -> None:
+    db_path = tmp_path / "catalog-alert-smoke.sqlite3"
+    engine = create_engine(
+        f"sqlite:///{db_path}",
+        connect_args={"check_same_thread": False},
+    )
+    test_session_local = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+
+    monkeypatch.setattr(database_module, "engine", engine)
+    monkeypatch.setattr(database_module, "SessionLocal", test_session_local)
+    monkeypatch.setattr(main_module, "engine", engine)
+    monkeypatch.setattr(main_module, "SessionLocal", test_session_local)
+
+    import dynamic_alert.edge_agent as edge_agent_module
+    from dynamic_alert.edge_agent import EdgeAgentRunner
+    from dynamic_alert.config import Settings
+    from dynamic_alert.services.discovery import DiscoveredDevice
+
+    monkeypatch.setattr(edge_agent_module, "SessionLocal", test_session_local)
+    monkeypatch.setattr(edge_agent_module, "engine", engine)
+
+    captured: dict[str, object] = {}
+
+    def fake_scan(_self):
+        return [
+            DiscoveredDevice(
+                site_code="HQ-PLANT",
+                ip_address="10.20.30.20",
+                hostname="thermal-loop-01",
+                vendor="Generic PLC",
+                open_ports={502},
+            )
+        ]
+
+    def fake_collect_telemetry(self, device):
+        captured["modbus_profile_set"] = self.settings.modbus_profile_set
+        captured["device_ip"] = device.ip_address
+        return [
+            {
+                "metric_key": "modbus_temp_supply_raw",
+                "value": 81.5,
+                "unit": "C",
+                "source_protocol": self.name,
+            }
+        ]
+
+    monkeypatch.setattr("dynamic_alert.services.discovery.NetworkDiscoveryService.scan", fake_scan)
+    monkeypatch.setattr("dynamic_alert.services.protocols.modbus.ModbusAdapter.collect_telemetry", fake_collect_telemetry)
+
+    with TestClient(app) as client:
+        register = client.post(
+            "/api/edge/register",
+            headers={"X-API-Key": "change-me-before-production"},
+            json={
+                "name": "factory-edge-03",
+                "site_code": "HQ-PLANT",
+                "hostname": "factory-edge-host-03",
+                "software_version": "0.1.0",
+            },
+        )
+        assert register.status_code == 200
+        edge_payload = register.json()
+        edge_key = edge_payload["node_key"]
+        edge_node_id = edge_payload["id"]
+
+        enqueue = client.post(
+            "/api/edge-jobs",
+            headers={"X-API-Key": "change-me-before-production"},
+            json={
+                "edge_node_id": edge_node_id,
+                "job_kind": "scan",
+                "payload": {
+                    "scan_subnets": ["10.20.30.0/24"],
+                    "enabled_protocols": ["modbus_tcp"],
+                    "modbus_profile_set": "generic_plc",
+                },
+            },
+        )
+        assert enqueue.status_code == 200
+
+        runner = EdgeAgentRunner(
+            settings=Settings(edge_node_name="factory-edge-03"),
+            client=SmokeEdgeClient(client, edge_key=edge_key),  # type: ignore[arg-type]
+        )
+        result = runner.run_once()
+
+        assert result["status"] == "completed"
+        assert result["job_kind"] == "scan"
+        assert captured == {
+            "modbus_profile_set": "generic_plc",
+            "device_ip": "10.20.30.20",
+        }
+
+        with test_session_local() as db:
+            telemetry = db.query(TelemetryRecord).order_by(TelemetryRecord.id.desc()).first()
+            assert telemetry is not None
+            assert telemetry.metric_key == "modbus_temp_supply_raw"
+
+            hypothesis = db.query(SemanticHypothesis).order_by(SemanticHypothesis.id.desc()).first()
+            assert hypothesis is not None
+            assert hypothesis.predicted_metric_key == "temperature_c"
+
+            alert = db.query(AlertEvent).order_by(AlertEvent.id.desc()).first()
+            assert alert is not None
+            assert "temperature_c" in alert.message
+            assert "modbus_temp_supply_raw" in alert.message
