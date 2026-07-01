@@ -17,8 +17,10 @@ def test_apply_settings_overrides_updates_scan_and_capture_fields() -> None:
             "modbus_generic_probe_count": 8,
             "modbus_profile_set": "generic_plc",
             "modbus_profiles_path": "configs/custom_modbus_profiles.json",
+            "mqtt_topic_set": "factory_default",
             "mqtt_probe_topics": ["factory/telemetry/#", "alerts/#"],
             "mqtt_probe_max_messages": 6,
+            "snmp_oid_set": "standard_mib2",
             "snmp_oid_sysname": "1.3.6.1.2.1.1.5.0",
             "opcua_max_nodes": 20,
         },
@@ -33,7 +35,9 @@ def test_apply_settings_overrides_updates_scan_and_capture_fields() -> None:
     assert updated.modbus_generic_probe_count == 8
     assert updated.modbus_profile_set == "generic_plc"
     assert updated.modbus_profiles_path == "configs/custom_modbus_profiles.json"
+    assert updated.mqtt_topic_set == "factory_default"
     assert updated.mqtt_probe_topics == ["factory/telemetry/#", "alerts/#"]
     assert updated.mqtt_probe_max_messages == 6
+    assert updated.snmp_oid_set == "standard_mib2"
     assert updated.snmp_oid_sysname == "1.3.6.1.2.1.1.5.0"
     assert updated.opcua_max_nodes == 20

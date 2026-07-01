@@ -1,0 +1,8 @@
+{
+  "default_set": "factory_default",
+  "topic_sets": {
+    "factory_default": ["#"],
+    "telemetry_focus": ["factory/telemetry/#", "factory/alerts/#"],
+    "packaging_line": ["factory/packaging/#"]
+  }
+}

@@ -420,12 +420,26 @@
               {% endfor %}
             </select>
             <div class="field-row">
-              <input id="edgeModbusProfilesPath" type="text" placeholder="ileri kullanim: modbus profiles path override">
-              <input id="edgeMqttTopics" type="text" placeholder="mqtt topics ornek: factory/telemetry/#,alerts/#">
+              <select id="edgeMqttTopicSet">
+                <option value="">mqtt topic set secin</option>
+                {% for item in available_mqtt_topic_sets %}
+                <option value="{{ item }}">{{ item }}</option>
+                {% endfor %}
+              </select>
+              <select id="edgeSnmpOidSet">
+                <option value="">snmp oid set secin</option>
+                {% for item in available_snmp_oid_sets %}
+                <option value="{{ item }}">{{ item }}</option>
+                {% endfor %}
+              </select>
             </div>
             <div class="field-row">
-              <input id="edgeSnmpSysNameOid" type="text" placeholder="snmp sysName oid override">
-              <input id="edgeSnmpSysDescrOid" type="text" placeholder="snmp sysDescr oid override">
+              <input id="edgeModbusProfilesPath" type="text" placeholder="ileri kullanim: modbus profiles path override">
+              <input id="edgeMqttTopics" type="text" placeholder="ileri kullanim: mqtt topics override">
+            </div>
+            <div class="field-row">
+              <input id="edgeSnmpSysNameOid" type="text" placeholder="ileri kullanim: snmp sysName oid override">
+              <input id="edgeSnmpSysDescrOid" type="text" placeholder="ileri kullanim: snmp sysDescr oid override">
             </div>
             <button id="edgeJobCreateButton">Edge Job Kuyruga Al</button>
           </div>
@@ -657,6 +671,8 @@
     const edgeOpcuaMaxNodes = document.getElementById("edgeOpcuaMaxNodes");
     const edgeModbusProbeCount = document.getElementById("edgeModbusProbeCount");
     const edgeModbusProfileSet = document.getElementById("edgeModbusProfileSet");
+    const edgeMqttTopicSet = document.getElementById("edgeMqttTopicSet");
+    const edgeSnmpOidSet = document.getElementById("edgeSnmpOidSet");
     const edgeDbusHostname = document.getElementById("edgeDbusHostname");
     const edgeModbusProfilesPath = document.getElementById("edgeModbusProfilesPath");
     const edgeMqttTopics = document.getElementById("edgeMqttTopics");
@@ -752,6 +768,12 @@
       }
       if (edgeModbusProfileSet.value) {
         payload.modbus_profile_set = edgeModbusProfileSet.value;
+      }
+      if (edgeMqttTopicSet.value) {
+        payload.mqtt_topic_set = edgeMqttTopicSet.value;
+      }
+      if (edgeSnmpOidSet.value) {
+        payload.snmp_oid_set = edgeSnmpOidSet.value;
       }
       if (edgeModbusProfilesPath.value.trim()) {
         payload.modbus_profiles_path = edgeModbusProfilesPath.value.trim();

@@ -3,6 +3,7 @@ from __future__ import annotations
 from dynamic_alert.config import Settings
 from dynamic_alert.services.discovery import DiscoveredDevice
 from dynamic_alert.services.protocols.base import FingerprintResult, ProtocolAdapter
+from dynamic_alert.services.protocols.snmp_oids import SnmpOidRepository
 
 
 class SnmpAdapter(ProtocolAdapter):
@@ -10,6 +11,7 @@ class SnmpAdapter(ProtocolAdapter):
 
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
+        self.oid_repository = SnmpOidRepository(settings.snmp_oid_sets_path)
 
     def matches(self, open_ports: set[int]) -> bool:
         return self.settings.snmp_port in open_ports
@@ -44,10 +46,11 @@ class SnmpAdapter(ProtocolAdapter):
             )
             engine = SnmpEngine()
             telemetry: list[dict] = []
+            oid_config = self.oid_repository.resolve(self.settings.snmp_oid_set) if self.settings.snmp_oid_set else {}
             for oid, metric_key in (
-                (self.settings.snmp_oid_sysdescr, "snmp_sysdescr"),
-                (self.settings.snmp_oid_sysname, "snmp_sysname"),
-                (self.settings.snmp_oid_uptime, "snmp_uptime_ticks"),
+                (oid_config.get("snmp_oid_sysdescr", self.settings.snmp_oid_sysdescr), "snmp_sysdescr"),
+                (oid_config.get("snmp_oid_sysname", self.settings.snmp_oid_sysname), "snmp_sysname"),
+                (oid_config.get("snmp_oid_uptime", self.settings.snmp_oid_uptime), "snmp_uptime_ticks"),
             ):
                 try:
                     error_indication, error_status, _, var_binds = await get_cmd(

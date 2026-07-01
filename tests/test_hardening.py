@@ -45,6 +45,15 @@ def test_edge_job_schema_rejects_invalid_mqtt_topics_shape() -> None:
     raise AssertionError("expected mqtt_probe_topics validation error")
 
 
+def test_edge_job_schema_rejects_invalid_mqtt_topic_set_shape() -> None:
+    try:
+        EdgeJobCreate(edge_node_id=1, job_kind="scan", payload={"mqtt_topic_set": ["factory_default"]})
+    except ValueError as exc:
+        assert "mqtt_topic_set payload" in str(exc)
+        return
+    raise AssertionError("expected mqtt_topic_set validation error")
+
+
 def test_edge_job_schema_rejects_invalid_modbus_profile_set_shape() -> None:
     try:
         EdgeJobCreate(edge_node_id=1, job_kind="scan", payload={"modbus_profile_set": ["generic_plc"]})
@@ -52,6 +61,15 @@ def test_edge_job_schema_rejects_invalid_modbus_profile_set_shape() -> None:
         assert "modbus_profile_set payload" in str(exc)
         return
     raise AssertionError("expected modbus_profile_set validation error")
+
+
+def test_edge_job_schema_rejects_invalid_snmp_oid_set_shape() -> None:
+    try:
+        EdgeJobCreate(edge_node_id=1, job_kind="scan", payload={"snmp_oid_set": ["standard_mib2"]})
+    except ValueError as exc:
+        assert "snmp_oid_set payload" in str(exc)
+        return
+    raise AssertionError("expected snmp_oid_set validation error")
 
 
 def test_edge_job_result_schema_rejects_invalid_status() -> None:

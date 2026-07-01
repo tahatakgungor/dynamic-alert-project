@@ -61,7 +61,9 @@ from dynamic_alert.services.container import (
 from dynamic_alert.services.audit import AuditLogService
 from dynamic_alert.services.passive_observation import PassiveObservationService
 from dynamic_alert.services.edge_runtime import EdgeRuntimeService
+from dynamic_alert.services.protocols.mqtt_topics import MqttTopicRepository
 from dynamic_alert.services.protocols.modbus_profiles import ModbusProfileRepository
+from dynamic_alert.services.protocols.snmp_oids import SnmpOidRepository
 from dynamic_alert.services.semantic_map import SemanticMapService
 from dynamic_alert.services.traffic_intelligence import TrafficIntelligenceService
 
@@ -109,6 +111,8 @@ def dashboard(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
         "alert_count": db.query(AlertEvent).count(),
     }
     modbus_profile_sets = ModbusProfileRepository(settings.modbus_profiles_path).profile_sets()
+    mqtt_topic_sets = MqttTopicRepository(settings.mqtt_topic_catalog_path).topic_sets()
+    snmp_oid_sets = SnmpOidRepository(settings.snmp_oid_sets_path).oid_sets()
     return templates.TemplateResponse(
         request,
         "index.html",
@@ -130,6 +134,8 @@ def dashboard(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
             "overview": overview,
             "available_protocols": PROTOCOL_ADAPTER_ORDER,
             "available_modbus_profile_sets": modbus_profile_sets,
+            "available_mqtt_topic_sets": mqtt_topic_sets,
+            "available_snmp_oid_sets": snmp_oid_sets,
         },
     )
 

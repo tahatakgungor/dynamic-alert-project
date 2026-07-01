@@ -5,6 +5,7 @@ import time
 from dynamic_alert.config import Settings
 from dynamic_alert.services.discovery import DiscoveredDevice
 from dynamic_alert.services.protocols.base import FingerprintResult, ProtocolAdapter
+from dynamic_alert.services.protocols.mqtt_topics import MqttTopicRepository
 
 
 class MqttAdapter(ProtocolAdapter):
@@ -12,6 +13,7 @@ class MqttAdapter(ProtocolAdapter):
 
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
+        self.topic_repository = MqttTopicRepository(settings.mqtt_topic_catalog_path)
 
     def matches(self, open_ports: set[int]) -> bool:
         return 1883 in open_ports
@@ -50,7 +52,8 @@ class MqttAdapter(ProtocolAdapter):
 
         try:
             client.connect(device.ip_address, 1883, int(self.settings.mqtt_probe_timeout_seconds))
-            for topic in self.settings.mqtt_probe_topics:
+            topics = self.topic_repository.resolve(self.settings.mqtt_topic_set) if self.settings.mqtt_topic_set else self.settings.mqtt_probe_topics
+            for topic in topics:
                 client.subscribe(topic)
             client.loop_start()
             deadline = time.time() + self.settings.mqtt_probe_timeout_seconds

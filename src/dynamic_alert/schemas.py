@@ -201,12 +201,18 @@ class EdgeJobCreate(BaseModel):
         if mqtt_topics is not None:
             if not isinstance(mqtt_topics, list) or len(mqtt_topics) > 16:
                 raise ValueError("mqtt_probe_topics payload must be a list with at most 16 entries")
+        mqtt_topic_set = self.payload.get("mqtt_topic_set")
+        if mqtt_topic_set is not None and (not isinstance(mqtt_topic_set, str) or len(mqtt_topic_set) > 64):
+            raise ValueError("mqtt_topic_set payload must be a string up to 64 chars")
         modbus_profiles_path = self.payload.get("modbus_profiles_path")
         if modbus_profiles_path is not None and (not isinstance(modbus_profiles_path, str) or len(modbus_profiles_path) > 255):
             raise ValueError("modbus_profiles_path payload must be a string up to 255 chars")
         modbus_profile_set = self.payload.get("modbus_profile_set")
         if modbus_profile_set is not None and (not isinstance(modbus_profile_set, str) or len(modbus_profile_set) > 64):
             raise ValueError("modbus_profile_set payload must be a string up to 64 chars")
+        snmp_oid_set = self.payload.get("snmp_oid_set")
+        if snmp_oid_set is not None and (not isinstance(snmp_oid_set, str) or len(snmp_oid_set) > 64):
+            raise ValueError("snmp_oid_set payload must be a string up to 64 chars")
         for oid_key in ("snmp_oid_sysdescr", "snmp_oid_sysname", "snmp_oid_uptime"):
             oid_value = self.payload.get(oid_key)
             if oid_value is not None and (not isinstance(oid_value, str) or len(oid_value) > 128):

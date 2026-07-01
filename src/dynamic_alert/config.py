@@ -30,12 +30,16 @@ class Settings(BaseSettings):
     modbus_timeout_seconds: float = 1.0
     modbus_generic_probe_enabled: bool = True
     modbus_generic_probe_count: int = 4
+    mqtt_topic_catalog_path: str = "configs/mqtt_topics.json"
+    mqtt_topic_set: str | None = None
     mqtt_probe_topics_raw: str = "#"
     mqtt_probe_timeout_seconds: float = 2.0
     mqtt_probe_max_messages: int = 3
     snmp_community: str = "public"
     snmp_timeout_seconds: float = 1.0
     snmp_port: int = 161
+    snmp_oid_sets_path: str = "configs/snmp_oids.json"
+    snmp_oid_set: str | None = None
     snmp_oid_sysdescr: str = "1.3.6.1.2.1.1.1.0"
     snmp_oid_sysname: str = "1.3.6.1.2.1.1.5.0"
     snmp_oid_uptime: str = "1.3.6.1.2.1.1.3.0"
