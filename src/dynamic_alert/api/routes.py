@@ -61,6 +61,7 @@ from dynamic_alert.services.container import (
 from dynamic_alert.services.audit import AuditLogService
 from dynamic_alert.services.passive_observation import PassiveObservationService
 from dynamic_alert.services.edge_runtime import EdgeRuntimeService
+from dynamic_alert.services.protocols.modbus_profiles import ModbusProfileRepository
 from dynamic_alert.services.semantic_map import SemanticMapService
 from dynamic_alert.services.traffic_intelligence import TrafficIntelligenceService
 
@@ -83,6 +84,7 @@ def get_edge_node(
 
 @router.get("/", response_class=HTMLResponse)
 def dashboard(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
+    settings = get_settings()
     jobs = [
         item.to_dict()
         for item in get_background_job_runner().list_recent(limit=10)
@@ -106,6 +108,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
         "telemetry_count": db.query(TelemetryRecord).count(),
         "alert_count": db.query(AlertEvent).count(),
     }
+    modbus_profile_sets = ModbusProfileRepository(settings.modbus_profiles_path).profile_sets()
     return templates.TemplateResponse(
         request,
         "index.html",
@@ -126,6 +129,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
             "jobs": jobs,
             "overview": overview,
             "available_protocols": PROTOCOL_ADAPTER_ORDER,
+            "available_modbus_profile_sets": modbus_profile_sets,
         },
     )
 

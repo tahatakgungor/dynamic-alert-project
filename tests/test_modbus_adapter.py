@@ -43,6 +43,52 @@ def test_profile_repository_matches_vendor(tmp_path: Path) -> None:
     assert len(repository.match(device)) == 1
 
 
+def test_profile_repository_supports_named_profile_sets(tmp_path: Path) -> None:
+    profile_file = tmp_path / "profiles.json"
+    profile_file.write_text(
+        """
+        {
+          "default_set": "generic_plc",
+          "profile_sets": {
+            "generic_plc": [
+              {
+                "name": "vendor-profile",
+                "vendor": "Generic PLC",
+                "metric_key": "temperature_c",
+                "register_type": "holding",
+                "address": 0,
+                "count": 1,
+                "unit_id": 1
+              }
+            ],
+            "thermal_loop": [
+              {
+                "name": "thermal-profile",
+                "hostname_contains": "thermal",
+                "metric_key": "supply_temperature_c",
+                "register_type": "holding",
+                "address": 10,
+                "count": 1,
+                "unit_id": 1
+              }
+            ]
+          }
+        }
+        """
+    )
+    repository = ModbusProfileRepository(str(profile_file))
+    device = DiscoveredDevice(
+        site_code="HQ-PLANT",
+        ip_address="192.168.1.20",
+        hostname="thermal-loop-01",
+        vendor="Generic PLC",
+        open_ports={502},
+    )
+
+    assert repository.profile_sets() == ["generic_plc", "thermal_loop"]
+    assert len(repository.match(device, profile_set="thermal_loop")) == 1
+
+
 def test_modbus_adapter_uses_profile_repository_path() -> None:
     settings = Settings(modbus_profiles_path="configs/modbus_profiles.json")
     adapter = ModbusAdapter(settings)

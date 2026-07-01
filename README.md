@@ -155,11 +155,14 @@ dynamic-alert-edge-agent run \
 {
   "scan_subnets": ["10.20.30.0/24"],
   "enabled_protocols": ["modbus_tcp", "snmp", "mqtt"],
+  "modbus_profile_set": "generic_plc",
   "modbus_generic_probe_count": 8,
   "mqtt_probe_max_messages": 5,
   "opcua_max_nodes": 16
 }
 ```
+
+`modbus_profile_set`, `configs/modbus_profiles.json` icindeki isimlendirilmis profil kataloglarindan birini secmek icin kullanilir. `modbus_profiles_path` hala desteklenir, ancak bu alan artik yalnizca farkli bir profil dosyasi enjekte etmek isteyen ileri seviye kullanimlar icin dusunulmelidir.
 
 ### Live capture
 

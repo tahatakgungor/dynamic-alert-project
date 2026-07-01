@@ -88,6 +88,7 @@ Gercekci uygulama su katmanlarla olur:
 - production ortaminda varsayilan bootstrap key reddi, edge payload limitleri ve status/job kind dogrulamalari eklendi
 - control plane <-> edge agent tam roundtrip smoke testi ve saha smoke matrix dokumani eklendi
 - edge job payload'inda `enabled_protocols` ve probe tuning alanlariyla protocol orchestration eklendi
+- Modbus register yorumlamasi icin isimlendirilmis profile set katalogu ve panel secimi eklendi
 - panelde kullanici dostu edge orchestration formu ve ozet metrikler eklendi
 - operator feedback ile semantic map persistence eklendi
 
@@ -188,6 +189,7 @@ Her yeni sohbette ve her yeni gorevde bu kurallara uy:
 - Son sertlestirme genislemesi: bootstrap key enforcement, edge schema validation ve oldest-job claim duzeltmesi
 - Son dogrulama genislemesi: register -> enqueue -> claim -> execute -> complete entegrasyon testi
 - Son orchestration genislemesi: job bazli protocol secimi ve probe tuning
+- Son protocol catalog genislemesi: named Modbus profile set secimi ve structured profile repository
 - Son UI genislemesi: orchestration odakli daha anlasilir kontrol paneli
 - Canli servis: `http://89.45.45.232:8011/`
 - Canli servis birimi: `dynamic-alert.service`

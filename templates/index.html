@@ -413,8 +413,14 @@
               <input id="edgeModbusProbeCount" type="number" min="1" max="32" placeholder="modbus generic probe count">
               <input id="edgeDbusHostname" type="text" placeholder="dbus-demo hostname override">
             </div>
+            <select id="edgeModbusProfileSet">
+              <option value="">modbus profile set secin</option>
+              {% for item in available_modbus_profile_sets %}
+              <option value="{{ item }}">{{ item }}</option>
+              {% endfor %}
+            </select>
             <div class="field-row">
-              <input id="edgeModbusProfilesPath" type="text" placeholder="modbus profiles path ornek: configs/modbus_profiles.json">
+              <input id="edgeModbusProfilesPath" type="text" placeholder="ileri kullanim: modbus profiles path override">
               <input id="edgeMqttTopics" type="text" placeholder="mqtt topics ornek: factory/telemetry/#,alerts/#">
             </div>
             <div class="field-row">
@@ -650,6 +656,7 @@
     const edgeMqttMaxMessages = document.getElementById("edgeMqttMaxMessages");
     const edgeOpcuaMaxNodes = document.getElementById("edgeOpcuaMaxNodes");
     const edgeModbusProbeCount = document.getElementById("edgeModbusProbeCount");
+    const edgeModbusProfileSet = document.getElementById("edgeModbusProfileSet");
     const edgeDbusHostname = document.getElementById("edgeDbusHostname");
     const edgeModbusProfilesPath = document.getElementById("edgeModbusProfilesPath");
     const edgeMqttTopics = document.getElementById("edgeMqttTopics");
@@ -742,6 +749,9 @@
       }
       if (edgeModbusProbeCount.value) {
         payload.modbus_generic_probe_count = Number(edgeModbusProbeCount.value);
+      }
+      if (edgeModbusProfileSet.value) {
+        payload.modbus_profile_set = edgeModbusProfileSet.value;
       }
       if (edgeModbusProfilesPath.value.trim()) {
         payload.modbus_profiles_path = edgeModbusProfilesPath.value.trim();

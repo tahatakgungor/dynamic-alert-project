@@ -33,6 +33,8 @@ def apply_settings_overrides(settings: Settings, payload: dict[str, Any] | None)
         updates["modbus_timeout_seconds"] = max(0.1, min(float(payload["modbus_timeout_seconds"]), 10.0))
     if "modbus_profiles_path" in payload and payload["modbus_profiles_path"]:
         updates["modbus_profiles_path"] = str(payload["modbus_profiles_path"])
+    if "modbus_profile_set" in payload and payload["modbus_profile_set"]:
+        updates["modbus_profile_set"] = str(payload["modbus_profile_set"])
     if "mqtt_probe_topics" in payload and isinstance(payload["mqtt_probe_topics"], list):
         updates["mqtt_probe_topics_raw"] = ",".join(str(item) for item in payload["mqtt_probe_topics"] if str(item).strip())
     if "mqtt_probe_timeout_seconds" in payload:

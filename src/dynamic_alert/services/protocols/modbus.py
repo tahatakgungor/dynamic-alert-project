@@ -36,7 +36,7 @@ class ModbusAdapter(ProtocolAdapter):
             return []
 
         try:
-            profiles = self.profile_repository.match(device)
+            profiles = self.profile_repository.match(device, profile_set=self.settings.modbus_profile_set)
             if profiles:
                 return self._read_profiles(client, profiles)
             if self.settings.modbus_generic_probe_enabled:
