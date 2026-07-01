@@ -166,6 +166,7 @@ dynamic-alert-edge-agent run \
 
 `modbus_profile_set`, `configs/modbus_profiles.json` icindeki isimlendirilmis profil kataloglarindan birini secmek icin kullanilir. `modbus_profiles_path` hala desteklenir, ancak bu alan artik yalnizca farkli bir profil dosyasi enjekte etmek isteyen ileri seviye kullanimlar icin dusunulmelidir.
 `mqtt_topic_set` ve `snmp_oid_set` de benzer sekilde named catalog secimi yapar. Ham `mqtt_probe_topics` ve `snmp_oid_*` override alanlari korunur, ancak artik ileri seviye elle override senaryolari icin dusunulmelidir.
+Her protocol ailesinde `set` secimi ile ayni aileye ait raw override alanlari birlikte gonderilmez; backend bu kombinasyonu reddeder ve panel override alanlarini otomatik devre disi birakir.
 
 ### Live capture
 

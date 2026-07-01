@@ -433,6 +433,7 @@
                 {% endfor %}
               </select>
             </div>
+            <p class="section-note">Ayni protocol ailesinde katalog secimi ile manuel override birlikte kullanilmaz. Bir set secersen ilgili override alanlari devre disi kalir.</p>
             <div class="field-row">
               <input id="edgeModbusProfilesPath" type="text" placeholder="ileri kullanim: modbus profiles path override">
               <input id="edgeMqttTopics" type="text" placeholder="ileri kullanim: mqtt topics override">
@@ -682,6 +683,28 @@
     const candidateActionButtons = document.querySelectorAll(".candidateActionButton");
     const protocolToggles = document.querySelectorAll(".protocolToggle");
 
+    function syncProtocolOverrideState() {
+      const modbusSetSelected = Boolean(edgeModbusProfileSet.value);
+      edgeModbusProfilesPath.disabled = modbusSetSelected;
+      if (modbusSetSelected) {
+        edgeModbusProfilesPath.value = "";
+      }
+
+      const mqttSetSelected = Boolean(edgeMqttTopicSet.value);
+      edgeMqttTopics.disabled = mqttSetSelected;
+      if (mqttSetSelected) {
+        edgeMqttTopics.value = "";
+      }
+
+      const snmpSetSelected = Boolean(edgeSnmpOidSet.value);
+      edgeSnmpSysNameOid.disabled = snmpSetSelected;
+      edgeSnmpSysDescrOid.disabled = snmpSetSelected;
+      if (snmpSetSelected) {
+        edgeSnmpSysNameOid.value = "";
+        edgeSnmpSysDescrOid.value = "";
+      }
+    }
+
     function currentApiKey() {
       return apiKeyInput.value.trim();
     }
@@ -812,6 +835,11 @@
       const created = await response.json();
       output.textContent = `Edge job kuyruga alindi: ${created.job_kind} (#${created.id}). Sayfayi yenileyin.`;
     });
+
+    edgeModbusProfileSet.addEventListener("change", syncProtocolOverrideState);
+    edgeMqttTopicSet.addEventListener("change", syncProtocolOverrideState);
+    edgeSnmpOidSet.addEventListener("change", syncProtocolOverrideState);
+    syncProtocolOverrideState();
 
     semanticMapButton.addEventListener("click", async () => {
       if (!currentApiKey()) {

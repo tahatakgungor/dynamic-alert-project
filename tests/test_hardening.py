@@ -54,6 +54,19 @@ def test_edge_job_schema_rejects_invalid_mqtt_topic_set_shape() -> None:
     raise AssertionError("expected mqtt_topic_set validation error")
 
 
+def test_edge_job_schema_rejects_mqtt_topic_set_and_raw_topics_together() -> None:
+    try:
+        EdgeJobCreate(
+            edge_node_id=1,
+            job_kind="scan",
+            payload={"mqtt_topic_set": "factory_default", "mqtt_probe_topics": ["factory/#"]},
+        )
+    except ValueError as exc:
+        assert "mqtt_topic_set and mqtt_probe_topics" in str(exc)
+        return
+    raise AssertionError("expected mqtt topic precedence validation error")
+
+
 def test_edge_job_schema_rejects_invalid_modbus_profile_set_shape() -> None:
     try:
         EdgeJobCreate(edge_node_id=1, job_kind="scan", payload={"modbus_profile_set": ["generic_plc"]})
@@ -63,6 +76,19 @@ def test_edge_job_schema_rejects_invalid_modbus_profile_set_shape() -> None:
     raise AssertionError("expected modbus_profile_set validation error")
 
 
+def test_edge_job_schema_rejects_modbus_profile_set_and_path_together() -> None:
+    try:
+        EdgeJobCreate(
+            edge_node_id=1,
+            job_kind="scan",
+            payload={"modbus_profile_set": "generic_plc", "modbus_profiles_path": "configs/custom.json"},
+        )
+    except ValueError as exc:
+        assert "modbus_profile_set and modbus_profiles_path" in str(exc)
+        return
+    raise AssertionError("expected modbus precedence validation error")
+
+
 def test_edge_job_schema_rejects_invalid_snmp_oid_set_shape() -> None:
     try:
         EdgeJobCreate(edge_node_id=1, job_kind="scan", payload={"snmp_oid_set": ["standard_mib2"]})
@@ -70,6 +96,19 @@ def test_edge_job_schema_rejects_invalid_snmp_oid_set_shape() -> None:
         assert "snmp_oid_set payload" in str(exc)
         return
     raise AssertionError("expected snmp_oid_set validation error")
+
+
+def test_edge_job_schema_rejects_snmp_oid_set_and_raw_oids_together() -> None:
+    try:
+        EdgeJobCreate(
+            edge_node_id=1,
+            job_kind="scan",
+            payload={"snmp_oid_set": "standard_mib2", "snmp_oid_sysname": "1.3.6.1.2.1.1.5.0"},
+        )
+    except ValueError as exc:
+        assert "snmp_oid_set and snmp_oid_*" in str(exc)
+        return
+    raise AssertionError("expected snmp precedence validation error")
 
 
 def test_edge_job_result_schema_rejects_invalid_status() -> None:

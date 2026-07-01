@@ -90,6 +90,7 @@ Gercekci uygulama su katmanlarla olur:
 - edge job payload'inda `enabled_protocols` ve probe tuning alanlariyla protocol orchestration eklendi
 - Modbus register yorumlamasi icin isimlendirilmis profile set katalogu ve panel secimi eklendi
 - MQTT topic ve SNMP OID secimleri icin isimlendirilmis katalog omurgasi eklendi
+- protocol catalog secimi ile raw override cakismalarini reddeden precedence guard eklendi
 - panelde kullanici dostu edge orchestration formu ve ozet metrikler eklendi
 - operator feedback ile semantic map persistence eklendi
 
