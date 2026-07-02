@@ -25,6 +25,7 @@ Bugunku mimari artik tek makinede demo eden bir API iskeletinden cikti. Sistem s
 - `dynamic-alert-edge-agent` CLI
 - Edge job payload ile protocol orchestration
 - Web panelde edge orchestration formu, audit, alarm, candidate ve semantic workflow gorunurlugu
+- Web panelde tek tikla calisan scenario lab
 - Gercekci smoke test matrix ve control plane <-> edge agent roundtrip testi
 
 ## Kritik gerceklik
@@ -215,6 +216,7 @@ Her protocol ailesinde `set` secimi ile ayni aileye ait raw override alanlari bi
 Panel artik yalnizca ham listeleyen bir dashboard degil:
 
 - ozet metrikler gosterir
+- scenario lab ile gozlemlenebilir demo akislarini calistirir
 - edge node ve edge job durumunu gosterir
 - edge orchestration formu ile JSON yazmadan edge job olusturur
 - semantic hypothesis -> semantic map promote akisina izin verir
@@ -251,6 +253,24 @@ Bu zinciri test eder:
 2. Semantic yorum
 3. `temperature_c` uzerinden alarm tetigi
 4. Telegram veya dry-run bildirimi
+
+## Demo scenario lab
+
+Paneldeki `Scenario Lab` bolumu, gercek saha cihazi baglamadan gosterilebilir akislari calistirir:
+
+- `D-Bus Sicaklik Alarmi`
+- `Modbus Kataloglu Termal Loop`
+- `Passive Unknown Protocol`
+
+Bu senaryolar telemetry, semantic hypothesis, alert ve audit panellerinde hemen gozlenebilir sonuc uretir.
+
+```bash
+curl http://127.0.0.1:8000/api/demo/scenarios \
+  -H 'X-API-Key: change-me-before-production'
+
+curl -X POST http://127.0.0.1:8000/api/demo/scenarios/modbus_catalog_alert \
+  -H 'X-API-Key: change-me-before-production'
+```
 
 ## Dogrulama ve smoke test
 

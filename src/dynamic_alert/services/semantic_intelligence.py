@@ -80,20 +80,20 @@ class SemanticIntelligenceService:
         source = telemetry.source_protocol.lower()
         value = telemetry.value
 
-        if "temp" in key or key.endswith("_c") or (0 <= value <= 200 and "modbus" in source):
-            return SemanticPrediction(
-                metric_key="temperature_c",
-                unit="C",
-                confidence=0.78,
-                evidence=f"key={telemetry.metric_key}, source={telemetry.source_protocol}, value_range=0-200",
-                learning_state="learning",
-            )
         if "press" in key or "bar" in key or (0 <= value <= 20 and "modbus" in source):
             return SemanticPrediction(
                 metric_key="pressure_bar",
                 unit="bar",
                 confidence=0.72,
                 evidence=f"key={telemetry.metric_key}, source={telemetry.source_protocol}, value_range=0-20",
+                learning_state="learning",
+            )
+        if "temp" in key or key.endswith("_c") or (0 <= value <= 200 and "modbus" in source):
+            return SemanticPrediction(
+                metric_key="temperature_c",
+                unit="C",
+                confidence=0.78,
+                evidence=f"key={telemetry.metric_key}, source={telemetry.source_protocol}, value_range=0-200",
                 learning_state="learning",
             )
         if "vib" in key or "accel" in key:

@@ -62,3 +62,37 @@ def test_edge_node_register_and_job_lifecycle() -> None:
 
         assert db.query(EdgeNode).count() == 1
         assert db.query(EdgeJob).count() == 1
+
+
+def test_complete_job_rejects_terminal_duplicate_completion() -> None:
+    engine = create_engine("sqlite:///:memory:")
+    SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    Base.metadata.create_all(bind=engine)
+
+    with SessionLocal() as db:
+        workspace = Workspace(name="HQ", slug="hq")
+        db.add(workspace)
+        db.commit()
+        db.refresh(workspace)
+
+        site = Site(workspace_id=workspace.id, name="HQ Plant", code="HQ-PLANT", timezone="UTC")
+        db.add(site)
+        db.commit()
+
+        service = EdgeRuntimeService(db)
+        node, _ = service.register_node(
+            name="factory-edge-02",
+            site_code="HQ-PLANT",
+            hostname="factory-edge-host",
+            software_version="0.1.0",
+        )
+        service.enqueue_edge_job(edge_node_id=node.id, job_kind="scan", payload=None)
+        claimed = service.claim_next_job(node=node)
+        assert claimed is not None
+        service.complete_job(node=node, job_id=claimed.id, status="completed", result={"ok": 1}, error=None)
+        try:
+            service.complete_job(node=node, job_id=claimed.id, status="completed", result={"ok": 1}, error=None)
+        except ValueError as exc:
+            assert "already finalized" in str(exc)
+            return
+        raise AssertionError("expected duplicate completion rejection")

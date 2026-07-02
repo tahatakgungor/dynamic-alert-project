@@ -1,6 +1,6 @@
 import json
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Security, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, Security, status
 from fastapi.security import APIKeyHeader
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -61,9 +61,11 @@ from dynamic_alert.services.container import (
 from dynamic_alert.services.audit import AuditLogService
 from dynamic_alert.services.passive_observation import PassiveObservationService
 from dynamic_alert.services.edge_runtime import EdgeRuntimeService
+from dynamic_alert.services.demo_scenarios import list_demo_scenarios, run_demo_scenario
 from dynamic_alert.services.protocols.mqtt_topics import MqttTopicRepository
 from dynamic_alert.services.protocols.modbus_profiles import ModbusProfileRepository
 from dynamic_alert.services.protocols.snmp_oids import SnmpOidRepository
+from dynamic_alert.services.rate_limit import edge_endpoint_limiter
 from dynamic_alert.services.semantic_map import SemanticMapService
 from dynamic_alert.services.traffic_intelligence import TrafficIntelligenceService
 
@@ -82,6 +84,23 @@ def get_edge_node(
     if node is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid edge key")
     return node
+
+
+def enforce_edge_rate_limit(node: EdgeNode, action: str, response: Response) -> None:
+    limit_config = {
+        "heartbeat": (30, 60),
+        "claim": (20, 60),
+        "complete": (20, 60),
+    }
+    limit, window_seconds = limit_config[action]
+    result = edge_endpoint_limiter.check(f"edge:{node.id}:{action}", limit=limit, window_seconds=window_seconds)
+    if result.allowed:
+        return
+    response.headers["Retry-After"] = str(result.retry_after_seconds)
+    raise HTTPException(
+        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        detail=f"rate limit exceeded for {action}; retry after {result.retry_after_seconds}s",
+    )
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -136,6 +155,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
             "available_modbus_profile_sets": modbus_profile_sets,
             "available_mqtt_topic_sets": mqtt_topic_sets,
             "available_snmp_oid_sets": snmp_oid_sets,
+            "demo_scenarios": list_demo_scenarios(),
         },
     )
 
@@ -229,9 +249,11 @@ def register_edge_node(
 @router.post("/api/edge/heartbeat", response_model=EdgeNodeRead)
 def edge_heartbeat(
     payload: EdgeNodeHeartbeatRequest,
+    response: Response,
     node: EdgeNode = Depends(get_edge_node),
     db: Session = Depends(get_db),
 ) -> EdgeNode:
+    enforce_edge_rate_limit(node, "heartbeat", response)
     return EdgeRuntimeService(db).heartbeat(node=node, status=payload.status, software_version=payload.software_version)
 
 
@@ -279,9 +301,11 @@ def list_edge_jobs(
 
 @router.post("/api/edge/claim-next-job")
 def claim_next_edge_job(
+    response: Response,
     node: EdgeNode = Depends(get_edge_node),
     db: Session = Depends(get_db),
 ) -> dict[str, str | int | dict | None]:
+    enforce_edge_rate_limit(node, "claim", response)
     job = EdgeRuntimeService(db).claim_next_job(node=node)
     if job is None:
         return {"status": "empty"}
@@ -298,16 +322,21 @@ def claim_next_edge_job(
 def complete_edge_job(
     job_id: int,
     payload: EdgeJobResultRequest,
+    response: Response,
     node: EdgeNode = Depends(get_edge_node),
     db: Session = Depends(get_db),
 ) -> dict[str, str | int | None]:
-    job = EdgeRuntimeService(db).complete_job(
-        node=node,
-        job_id=job_id,
-        status=payload.status,
-        result=payload.result,
-        error=payload.error,
-    )
+    enforce_edge_rate_limit(node, "complete", response)
+    try:
+        job = EdgeRuntimeService(db).complete_job(
+            node=node,
+            job_id=job_id,
+            status=payload.status,
+            result=payload.result,
+            error=payload.error,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     AuditLogService(db).record(
         actor=node.name,
         action="edge-job.complete",
@@ -569,3 +598,28 @@ def run_dbus_temperature_demo(
 
     job = enqueue_dbus_demo_job(actor=auth.name)
     return {"job_id": job.id, "status": job.status, "job_kind": job.kind}
+
+
+@router.get("/api/demo/scenarios")
+def get_demo_scenarios(auth: AuthContext = Depends(get_auth_context)) -> list[dict[str, str]]:
+    return list_demo_scenarios()
+
+
+@router.post("/api/demo/scenarios/{scenario_key}")
+def execute_demo_scenario(
+    scenario_key: str,
+    auth: AuthContext = Depends(require_operator),
+    db: Session = Depends(get_db),
+) -> dict[str, object]:
+    settings = get_settings()
+    try:
+        result = run_demo_scenario(db, settings, scenario_key)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    AuditLogService(db).record(
+        actor=auth.name,
+        action="demo-scenario.run",
+        target=scenario_key,
+        details=str(result.get("result")),
+    )
+    return result

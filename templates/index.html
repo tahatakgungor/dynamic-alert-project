@@ -248,6 +248,30 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 18px;
     }
+    .scenario-grid {
+      display: grid;
+      gap: 12px;
+    }
+    .scenario-card {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.78);
+      border-radius: 18px;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .scenario-card p,
+    .scenario-card small {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .scenario-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
     .list {
       list-style: none;
       padding: 0;
@@ -373,6 +397,27 @@
 
     <section class="layout">
       <div class="stack">
+        <article class="card">
+          <div class="card-head">
+            <h2>Scenario Lab</h2>
+            <small>tek tikla gozetilebilir demo</small>
+          </div>
+          <p class="section-note">Gercek cihaz baglamadan protokol, semantic ve alarm akislarini gostermek icin hazir senaryolari calistir. Sonuclari sagdaki telemetry, alert ve audit panellerinden izleyebilirsin.</p>
+          <div class="scenario-grid">
+            {% for scenario in demo_scenarios %}
+            <article class="scenario-card">
+              <div class="scenario-meta">
+                <strong>{{ scenario.title }}</strong>
+                <span class="pill {% if scenario.category == 'forensics' %}warn{% elif scenario.category == 'alert' %}bad{% endif %}">{{ scenario.category }}</span>
+              </div>
+              <p>{{ scenario.description }}</p>
+              <small>Beklenen: {{ scenario.expected }}</small>
+              <button class="secondary demoScenarioButton" data-key="{{ scenario.key }}">{{ scenario.title }} Calistir</button>
+            </article>
+            {% endfor %}
+          </div>
+        </article>
+
         <article class="card">
           <div class="card-head">
             <h2>Edge Orchestration</h2>
@@ -682,6 +727,7 @@
     const promoteButtons = document.querySelectorAll(".promoteHypothesisButton");
     const candidateActionButtons = document.querySelectorAll(".candidateActionButton");
     const protocolToggles = document.querySelectorAll(".protocolToggle");
+    const demoScenarioButtons = document.querySelectorAll(".demoScenarioButton");
 
     function syncProtocolOverrideState() {
       const modbusSetSelected = Boolean(edgeModbusProfileSet.value);
@@ -754,6 +800,30 @@
     scanButton.addEventListener("click", async () => postSimpleJob("/api/scan", "Lokal tarama"));
     observeButton.addEventListener("click", async () => postSimpleJob("/api/passive-observe", "Passive observe"));
     liveCaptureButton.addEventListener("click", async () => postSimpleJob("/api/live-capture", "Live capture"));
+
+    demoScenarioButtons.forEach((button) => {
+      button.addEventListener("click", async () => {
+        if (!currentApiKey()) {
+          output.textContent = "Demo scenario icin API anahtari gerekli.";
+          return;
+        }
+        const scenarioKey = button.dataset.key;
+        output.textContent = `${scenarioKey} calistiriliyor...`;
+        const response = await fetch(`/api/demo/scenarios/${scenarioKey}`, {
+          method: "POST",
+          headers: { "X-API-Key": currentApiKey() },
+        });
+        if (!response.ok) {
+          const errorPayload = await response.json().catch(() => ({}));
+          output.textContent = `Scenario basarisiz. ${errorPayload.detail || ""}`.trim();
+          return;
+        }
+        const payload = await response.json();
+        const telemetry = payload.latest_telemetry ? `${payload.latest_telemetry.metric_key}=${payload.latest_telemetry.value}${payload.latest_telemetry.unit || ""}` : "telemetry yok";
+        const alert = payload.latest_alert ? payload.latest_alert.message : "alert yok";
+        output.textContent = `${payload.scenario_key} tamamlandi. ${telemetry}. ${alert}. Sayfayi yenileyin.`;
+      });
+    });
 
     edgeJobCreateButton.addEventListener("click", async () => {
       if (!currentApiKey()) {

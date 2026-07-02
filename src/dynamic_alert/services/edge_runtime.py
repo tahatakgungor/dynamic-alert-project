@@ -99,6 +99,10 @@ class EdgeRuntimeService:
             .filter(EdgeJob.id == job_id, EdgeJob.edge_node_id == node.id)
             .one()
         )
+        if job.status in {"completed", "failed"}:
+            raise ValueError(f"edge job already finalized: {job.status}")
+        if job.status != "running":
+            raise ValueError(f"edge job is not running: {job.status}")
         job.status = status
         job.result_json = json.dumps(result) if result is not None else None
         job.error = error
